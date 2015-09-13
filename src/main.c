@@ -1,60 +1,40 @@
-#include <pebble.h>
+// @file main.c
+// @brief Entry point and main logic
+//
+// Contains main logic and execution loop. Creates and destroys all windows.
+//
+// @author Eric D. Phillips
+// @date September 13, 2015
+// @bugs No known bugs
 
-static Window *window;
-static TextLayer *text_layer;
+#include "menu_window.h"
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
+// Main data object for application
+static struct {
+  Window      *menu_window;     //< Pointer to window for menu window
+} main_app_data;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Loading and Unloading
+//
+
+// Initialize
+static void prv_initialize(void) {
+  // create menu window
+  main_app_data.menu_window = menu_window_create();
+  window_stack_push(main_app_data.menu_window, true);
 }
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Up");
+// Terminate
+static void prv_terminate(void) {
+  // destroy windows
+  menu_window_destroy(main_app_data.menu_window);
 }
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Down");
-}
-
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
-}
-
-static void window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect bounds = layer_get_bounds(window_layer);
-
-  text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(text_layer, "Press a button");
-  text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(text_layer));
-}
-
-static void window_unload(Window *window) {
-  text_layer_destroy(text_layer);
-}
-
-static void init(void) {
-  window = window_create();
-  window_set_click_config_provider(window, click_config_provider);
-  window_set_window_handlers(window, (WindowHandlers) {
-    .load = window_load,
-    .unload = window_unload,
-  });
-  const bool animated = true;
-  window_stack_push(window, animated);
-}
-
-static void deinit(void) {
-  window_destroy(window);
-}
-
+// Entry point
 int main(void) {
-  init();
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-
+  prv_initialize();
   app_event_loop();
-  deinit();
+  prv_terminate();
 }

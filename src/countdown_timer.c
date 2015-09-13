@@ -33,7 +33,7 @@ typedef struct CountdownTimer {
 
 // Find a CountdownTimer by its id
 // Optionally override the id and find the last CountdownTimer
-CountdownTimer *prv_countdown_timer_find_by_id(uint32_t id, bool find_last) {
+static CountdownTimer *prv_countdown_timer_find_by_id(uint32_t id, bool find_last) {
   // if nodes exist
   if (countdown_timer_data.head) {
     // find node in linked list
@@ -55,7 +55,7 @@ CountdownTimer *prv_countdown_timer_find_by_id(uint32_t id, bool find_last) {
 }
 
 // Recursively find and remove a node from the list
-CountdownTimer *prv_countdown_timer_recursive_removal(CountdownTimer *current_node,
+static CountdownTimer *prv_countdown_timer_recursive_removal(CountdownTimer *current_node,
                                                       uint32_t target_id) {
   // return if current node is null
   if (!current_node) {
