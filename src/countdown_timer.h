@@ -8,6 +8,8 @@
 //! @date September 11, 2015
 //! @bugs No known bugs
 
+#include <pebble.h>
+
 
 // Structure for CountdownTimer
 typedef struct CountdownTimer CountdownTimer;
@@ -23,10 +25,13 @@ typedef struct CountdownTimer CountdownTimer;
 void countdown_timer_format_as_string(uint32_t id, char *buff);
 
 //! Create a new CountdownTimer
-//! @param value The initial value at which to create the CountdownTimer in milliseconds
+//! @param length The initial value at which to create the CountdownTimer in milliseconds
 //! @return A unique number identifier for the CountdownTimer
-uint32_t countdown_timer_create(int64_t value);
+uint32_t countdown_timer_create(int64_t length);
 
 //! Destroy a CountdownTimer
 //! @param id The unique number identifier for the CountdownTimer
 void countdown_timer_destroy(uint32_t id);
+
+//! Initialize CountdownTimer singleton
+void countdown_timer_initialize(void);
