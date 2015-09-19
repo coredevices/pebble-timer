@@ -12,6 +12,10 @@
 #include <pebble.h>
 
 
+//! Some global constants
+#define GLOBAL_APP_HIGHLIGHT_COLOR COLOR_FALLBACK(GColorPictonBlue, GColorWhite)
+
+
 //! Terminate program if null pointer
 //! @param ptr The pointer to check for null
 #define ASSERT(ptr) assert(ptr, __FILE__, __LINE__)

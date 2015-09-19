@@ -8,6 +8,7 @@
 // @bugs No known bugs
 
 #include "menu_window.h"
+#include "countdown_timer.h"
 
 // Main data object for application
 static struct {
@@ -35,6 +36,12 @@ static void prv_terminate(void) {
 // Entry point
 int main(void) {
   prv_initialize();
+
+  // add a few test timers
+  countdown_timer_create(10000);
+  psleep(1000);
+  countdown_timer_create(60000);
+
   app_event_loop();
   prv_terminate();
 }
