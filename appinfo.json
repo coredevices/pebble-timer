@@ -1,0 +1,29 @@
+{
+  "uuid": "9829184b-e90f-4359-8093-e69189f2df01",
+  "shortName": "Pebble_Timer",
+  "longName": "Pebble_Timer",
+  "companyName": "MakeAwesomeHappen",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt", "chalk"],
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": [
+      {
+        "type": "png",
+        "name": "IMAGE_PLAY",
+        "file": "images/image_play.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_PAUSE",
+        "file": "images/image_pause.png"
+      }
+    ]
+  }
+}
