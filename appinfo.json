@@ -5,7 +5,7 @@
   "companyName": "Pebble",
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["aplite", "basalt"],
+  "targetPlatforms": ["aplite", "basalt", "chalk"],
   "watchapp": {
     "watchface": false
   },
@@ -48,7 +48,7 @@
         "type": "png",
         "name": "IMAGE_DISMISS",
         "file": "images/action_bar_icon_dismiss.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",
@@ -60,7 +60,7 @@
         "type": "png",
         "name": "IMAGE_EDIT",
         "file": "images/action_bar_icon_edit.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",
@@ -72,7 +72,7 @@
         "type": "png",
         "name": "IMAGE_PAUSE",
         "file": "images/action_bar_icon_pause.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",
@@ -84,7 +84,7 @@
         "type": "png",
         "name": "IMAGE_PLAY",
         "file": "images/action_bar_icon_play.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",
@@ -96,7 +96,7 @@
         "type": "png",
         "name": "IMAGE_SNOOZE",
         "file": "images/action_bar_icon_snooze.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",
@@ -108,7 +108,7 @@
         "type": "png",
         "name": "IMAGE_DELETE",
         "file": "images/action_bar_icon_delete.png",
-        "targetPlatforms": ["basalt"]
+        "targetPlatforms": ["basalt", "chalk"]
       },
       {
         "type": "png",

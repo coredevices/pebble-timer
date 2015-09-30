@@ -1,7 +1,5 @@
-
-# Ignore build generated files
 build
-
-# Ignore waf lock file
+.idea/
 .lock-waf*
 .DS_Store
+CMakeLists.txt
