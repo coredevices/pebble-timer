@@ -151,10 +151,14 @@ static MenuWindow *menu_window_init(MenuWindow *menu_window,
     GRect bounds = layer_get_frame(root);
     // create menu layer
 #ifdef PBL_SDK_3
-    menu_window->menu = menu_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w,
-      bounds.size.h - STATUS_BAR_LAYER_HEIGHT));
+    uint16_t vert_offset = DISP_SHAPE_SELECT(STATUS_BAR_LAYER_HEIGHT, 0);
+    menu_window->menu = menu_layer_create(GRect(0, vert_offset, bounds.size.w, bounds.size.h -
+      vert_offset));
 #else
     menu_window->menu = menu_layer_create(bounds);
+#endif
+#ifdef PBL_DISP_SHAPE_ROUND
+    menu_layer_set_center_focused(menu_window->menu, true);
 #endif
     menu_layer_set_callbacks(menu_window->menu, menu_window, (MenuLayerCallbacks) {
       .get_num_sections = menu_get_num_sections_callback,
