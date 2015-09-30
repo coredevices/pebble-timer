@@ -104,6 +104,11 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
       return;
     }
     // otherwise draw progress bar
+#ifdef PBL_DISP_SHAPE_ROUND
+    int16_t prog_bar_border = 25;
+#else
+    int16_t prog_bar_border = 10;
+#endif
 #ifdef PBL_COLOR
     if (menu_layer_get_selected_index(menu_window->menu).row == cell_index->row) {
       graphics_context_set_fill_color(ctx, GColorWhite);
@@ -111,11 +116,12 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
     else {
       graphics_context_set_fill_color(ctx, GColorLightGray);
     }
-    graphics_fill_rect(ctx, GRect(10, size.h - 10, (size.w - 20), 2), 0, GCornerNone);
+    graphics_fill_rect(ctx, GRect(prog_bar_border, size.h - prog_bar_border,
+      (size.w - prog_bar_border * 2), 2), 0, GCornerNone);
 #endif
     graphics_context_set_fill_color(ctx, GColorBlack);
-    graphics_fill_rect(ctx, GRect(10, size.h - 10,
-      (size.w - 20) * countdown_timer_get_current_time(countdown_timer) /
+    graphics_fill_rect(ctx, GRect(prog_bar_border, size.h - prog_bar_border,
+      (size.w - prog_bar_border * 2) * countdown_timer_get_current_time(countdown_timer) /
       countdown_timer_get_duration(countdown_timer), 2), 0, GCornerNone);
   }
 }
