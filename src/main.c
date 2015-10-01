@@ -121,6 +121,7 @@ static void app_timer_callback(void *data) {
   }
   else if (popup_top) {
     refresh_rate = 20;
+    inactivity_duration = 0;
   }
   if (refresh_rate == 0) {
     return;

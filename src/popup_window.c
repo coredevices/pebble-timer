@@ -115,13 +115,18 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
  */
 
 static void layers_center_in_window(PopupWindow *popup_window) {
+#ifdef PBL_DISP_SHAPE_ROUND
+  int16_t horiz_off = 0;
+#else
+  int16_t horiz_off = ACTION_BAR_WIDTH;
+#endif
 #ifdef PBL_SDK_3
   // change layer size based on PDC size, to center PDC
   GSize pdc_frame = gdraw_command_sequence_get_bounds_size(popup_window->draw_sequence);
   GRect window_frame = layer_get_frame(window_get_root_layer(popup_window->window));
   GRect layer_frame = GRect(0, 0, pdc_frame.w, pdc_frame.h);
   if (popup_window->action_visible) {
-    layer_frame.origin.x = (window_frame.size.w - ACTION_BAR_WIDTH) / 2 - pdc_frame.w / 2;
+    layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - pdc_frame.w / 2;
   }
   else {
     layer_frame.origin.x = window_frame.size.w / 2 - pdc_frame.w / 2;
@@ -134,7 +139,7 @@ static void layers_center_in_window(PopupWindow *popup_window) {
   GRect window_frame = layer_get_frame(window_get_root_layer(popup_window->window));
   GRect layer_frame = image_frame;
   if (popup_window->action_visible) {
-    layer_frame.origin.x = (window_frame.size.w - ACTION_BAR_WIDTH) / 2 - image_frame.size.w / 2;
+    layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - image_frame.size.w / 2;
   }
   else {
     layer_frame.origin.x = window_frame.size.w / 2 - image_frame.size.w / 2;
@@ -146,7 +151,7 @@ static void layers_center_in_window(PopupWindow *popup_window) {
   // center the text layer
   GRect text_frame = layer_get_frame(text_layer_get_layer(popup_window->text));
   text_frame.size.w = layer_get_bounds(window_get_root_layer(popup_window->window)).size.w -
-    ((popup_window->action_visible) ? ACTION_BAR_WIDTH : 0);
+    ((popup_window->action_visible) ? horiz_off : 0);
   layer_set_frame(text_layer_get_layer(popup_window->text), text_frame);
   text_frame.origin.x = text_frame.origin.y = 0;
   layer_set_bounds(text_layer_get_layer(popup_window->text), text_frame);
