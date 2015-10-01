@@ -252,7 +252,13 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
     countdown_timer_get_duration(detail_window->countdown_timer);
 
   // draw background
-#ifdef PBL_COLOR
+#ifdef PBL_DISP_SHAPE_ROUND
+  graphics_context_set_fill_color(ctx, detail_window->highlight_color);
+  GRect bounds = layer_get_bounds(layer);
+  graphics_fill_radial(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 0, bounds.size.w / 2,
+    TRIG_MAX_ANGLE - TRIG_MAX_ANGLE * current_time / countdown_timer_get_duration
+    (detail_window->countdown_timer), TRIG_MAX_ANGLE);
+#elif PBL_COLOR
   graphics_context_set_fill_color(ctx, detail_window->highlight_color);
   graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w,
     layer_get_bounds(layer).size.h - water_level), 1, GCornerNone);
@@ -263,25 +269,26 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   graphics_draw_bitmap_in_rect(ctx, detail_window->waves_image, img_frame);
 #endif
 
-  if (!detail_window->power_saver_mode) {
-    // step bubbles
-    step_bubbles(detail_window, water_level);
-    // draw bubbles
-    draw_bubbles(detail_window, ctx, water_level);
-  }
-  else {
-    // draw text
-    graphics_context_set_text_color(ctx, GColorBlack);
-#ifdef PBL_SDK_3
-    graphics_draw_text(ctx, "Power Saver", fonts_get_system_font(FONT_KEY_GOTHIC_14),
-      GRect(0, 60, layer_get_bounds(detail_window->layer).size.w - ACTION_BAR_WIDTH, 35),
-      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#else
-    graphics_draw_text(ctx, "Power Saver", fonts_get_system_font(FONT_KEY_GOTHIC_14),
-      GRect(0, 44, layer_get_bounds(detail_window->layer).size.w - ACTION_BAR_WIDTH, 35),
-      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-#endif
-  }
+
+//  if (!detail_window->power_saver_mode) {
+//    // step bubbles
+//    step_bubbles(detail_window, water_level);
+//    // draw bubbles
+//    draw_bubbles(detail_window, ctx, water_level);
+//  }
+//  else {
+//    // draw text
+//    graphics_context_set_text_color(ctx, GColorBlack);
+//#ifdef PBL_SDK_3
+//    graphics_draw_text(ctx, "Power Saver", fonts_get_system_font(FONT_KEY_GOTHIC_14),
+//      GRect(0, 60, layer_get_bounds(detail_window->layer).size.w - ACTION_BAR_WIDTH, 35),
+//      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+//#else
+//    graphics_draw_text(ctx, "Power Saver", fonts_get_system_font(FONT_KEY_GOTHIC_14),
+//      GRect(0, 44, layer_get_bounds(detail_window->layer).size.w - ACTION_BAR_WIDTH, 35),
+//      GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+//#endif
+//  }
 }
 
 
@@ -407,7 +414,10 @@ detail_window->callbacks = detail_window_callbacks;
   layer_set_update_proc(detail_window->layer, layer_update_proc);
   layer_add_child(root, detail_window->layer);
   // create main text
-#ifdef PBL_SDK_3
+#ifdef PBL_DISP_SHAPE_ROUND
+  detail_window->main_text = text_layer_create(
+    GRect(0, 65, bounds.size.w - ACTION_BAR_WIDTH, 36));
+#elif PBL_SDK_3
   detail_window->main_text = text_layer_create(
     GRect(0, 20, bounds.size.w - ACTION_BAR_WIDTH, 36));
 #else
@@ -421,17 +431,22 @@ detail_window->callbacks = detail_window_callbacks;
   text_layer_set_background_color(detail_window->main_text, GColorClear);
   layer_add_child(root, text_layer_get_layer(detail_window->main_text));
   // create sub text
-#ifdef PBL_SDK_3
+#ifdef PBL_DISP_SHAPE_ROUND
+  detail_window->sub_text = text_layer_create(
+    GRect(0, 145, bounds.size.w, 20));
+    text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentCenter);
+#elif PBL_SDK_3
   detail_window->sub_text = text_layer_create(
     GRect(10, 138, bounds.size.w - ACTION_BAR_WIDTH, 20));
+    text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
 #else
   detail_window->sub_text = text_layer_create(
     GRect(10, 122, bounds.size.w - ACTION_BAR_WIDTH, 20));
+  text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
 #endif
   //text_layer_set_text_color(detail_window->main_text, GColorBlack);
   text_layer_set_font(detail_window->sub_text, detail_window->small_font);
   text_layer_set_text(detail_window->sub_text, "00:00");
-  text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
   text_layer_set_background_color(detail_window->sub_text, GColorClear);
   layer_add_child(root, text_layer_get_layer(detail_window->sub_text));
   // create action bar
@@ -444,9 +459,14 @@ detail_window->callbacks = detail_window_callbacks;
   action_bar_layer_set_icon(detail_window->action, BUTTON_ID_DOWN, detail_window->delete_icon);
   // create status bar
 #ifdef PBL_SDK_3
+#ifdef PBL_DISP_SHAPE_ROUND
+  int16_t horiz_off = 0;
+#else
+  int16_t horiz_off = ACTION_BAR_WIDTH;
+#endif
   detail_window->status = status_bar_layer_create();
   layer_set_frame(status_bar_layer_get_layer(detail_window->status),
-    GRect(0, 0, bounds.size.w - ACTION_BAR_WIDTH, STATUS_BAR_LAYER_HEIGHT));
+    GRect(0, 0, bounds.size.w - horiz_off, STATUS_BAR_LAYER_HEIGHT));
   status_bar_layer_set_colors(detail_window->status, GColorClear, GColorBlack);
   layer_add_child(root, status_bar_layer_get_layer(detail_window->status));
 #endif
