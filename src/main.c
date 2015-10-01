@@ -31,7 +31,7 @@
 #define COUNTDOWN_TIMER_SNOOZE_DELAY 60000 // milliseconds
 #define TIMER_MIN_LENGTH 5000 // milliseconds
 #define TIMELINE_MIN_LENGTH 900000 // milliseconds
-#define INACTIVITY_THRESHOLD 900000 // length of time before refresh throttling in milliseconds
+#define INACTIVITY_THRESHOLD 0 // length of time before refresh throttling in milliseconds
 #define INACTIVE_REFRESH_DELAY 1000 // ms between frames after throttling
 #define PIN_ACTION_CODE_TRUNCATION_LEVEL 100 // both the pin id and action code have to be stored
                                              // in the pins action code

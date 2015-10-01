@@ -255,7 +255,7 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
 #ifdef PBL_DISP_SHAPE_ROUND
   graphics_context_set_fill_color(ctx, detail_window->highlight_color);
   GRect bounds = layer_get_bounds(layer);
-  graphics_fill_radial(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 0, bounds.size.w / 2,
+  graphics_fill_radial(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 0, bounds.size.w / 2 + 5,
     TRIG_MAX_ANGLE - TRIG_MAX_ANGLE * current_time / countdown_timer_get_duration
     (detail_window->countdown_timer), TRIG_MAX_ANGLE);
 #elif PBL_COLOR
