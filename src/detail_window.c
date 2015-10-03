@@ -263,10 +263,12 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w,
     layer_get_bounds(layer).size.h - water_level), 1, GCornerNone);
 #else
-  GRect img_frame = gbitmap_get_bounds(detail_window->waves_image);
-  img_frame.size.w = layer_get_bounds(layer).size.w;
-  img_frame.origin = GPoint(0, water_level - img_frame.size.h);
-  graphics_draw_bitmap_in_rect(ctx, detail_window->waves_image, img_frame);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w, 2), 1, GCornerNone);
+//  GRect img_frame = gbitmap_get_bounds(detail_window->waves_image);
+//  img_frame.size.w = layer_get_bounds(layer).size.w;
+//  img_frame.origin = GPoint(0, water_level - img_frame.size.h);
+//  graphics_draw_bitmap_in_rect(ctx, detail_window->waves_image, img_frame);
 #endif
 
 
