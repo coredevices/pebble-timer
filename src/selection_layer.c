@@ -106,9 +106,9 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
     int width = data->cell_widths[i];
 
     // The cell rectangle has been constructed
-    const GRect rect = GRect(current_x_offset, y_offset, width, height);
+    GRect rect = GRect(current_x_offset, y_offset, width, height);
 
-#ifdef PBL_SDK_3
+#ifdef PBL_COLOR
     // Draw the cell as inactive by default
     GColor bg_color = data->inactive_background_color;
 
@@ -118,7 +118,13 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
       bg_color = data->active_background_color;
     }
     graphics_context_set_fill_color(ctx, bg_color);
+#ifdef PBL_DISP_SHAPE_ROUND
+    rect.origin.y -= (rect.size.w - rect.size.h) / 2;
+    rect.size.h = rect.size.w;
+    graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
+#else
     graphics_fill_rect(ctx, rect, 1, GCornerNone);
+#endif
 #else
     // draw a black, empty box
     graphics_context_set_stroke_color(ctx, GColorBlack);
@@ -184,7 +190,13 @@ static void prv_draw_slider_slide(Layer *layer, GContext *ctx) {
 
 #ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
-  graphics_fill_rect(ctx, rect, 1, GCornerNone);
+#ifdef PBL_DISP_SHAPE_ROUND
+    rect.origin.y -= (rect.size.w - rect.size.h) / 2;
+    rect.size.h = rect.size.w;
+    graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
+#else
+    graphics_fill_rect(ctx, rect, 1, GCornerNone);
+#endif
 #else
   layer_set_frame(inverter_layer_get_layer(data->inverter), rect);
 #endif
@@ -219,10 +231,15 @@ static void prv_draw_slider_settle(Layer *layer, GContext *ctx) {
     x_offset -= current_width;
 
   GRect rect = GRect(x_offset, 0, current_width, layer_get_bounds(layer).size.h);
-
 #ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
-  graphics_fill_rect(ctx, rect, 1, GCornerNone);
+#ifdef PBL_DISP_SHAPE_ROUND
+    rect.origin.y -= (rect.size.w - rect.size.h) / 2;
+    rect.size.h = rect.size.w;
+    graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
+#else
+    graphics_fill_rect(ctx, rect, 1, GCornerNone);
+#endif
 #else
   if (data->slide_is_forward){
     rect.origin.x -= data->cell_widths[data->selected_cell_idx];
