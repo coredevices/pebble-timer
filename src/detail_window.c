@@ -78,7 +78,7 @@ struct DetailWindow {
   TextLayer   *sub_text;  //< footer, small text
   ActionBarLayer *action; //< action bar
   GBitmap     *edit_icon, *play_icon, *pause_icon, *delete_icon;  //< icons
-  GFont       *large_font, *medium_font, *small_font; //< fonts
+  GFont       large_font, medium_font, small_font; //< fonts
   GColor      highlight_color;        //< main color for highlights
 #ifdef PBL_SDK_3
   StatusBarLayer *status;             //< status bar for SDK 3
@@ -248,16 +248,17 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   // get DetailWindow pointer from layer data
   DetailWindow *detail_window = (*(DetailWindow**)layer_get_data(layer));
   int64_t current_time = countdown_timer_get_current_time(detail_window->countdown_timer);
+  int64_t total_time = countdown_timer_get_duration(detail_window->countdown_timer);
   int16_t water_level = layer_get_bounds(layer).size.h - layer_get_bounds(layer).size.h * current_time /
-    countdown_timer_get_duration(detail_window->countdown_timer);
+    total_time;
 
   // draw background
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
   graphics_context_set_fill_color(ctx, detail_window->highlight_color);
   GRect bounds = layer_get_bounds(layer);
-  graphics_fill_radial(ctx, GPoint(bounds.size.w / 2, bounds.size.h / 2), 0, bounds.size.w / 2 + 5,
-    TRIG_MAX_ANGLE - TRIG_MAX_ANGLE * current_time / countdown_timer_get_duration
-    (detail_window->countdown_timer), TRIG_MAX_ANGLE);
+  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, bounds.size.w / 2,
+    TRIG_MAX_ANGLE - TRIG_MAX_ANGLE * current_time / total_time, TRIG_MAX_ANGLE);
+  // TODO: Fix this code
 #elif PBL_COLOR
   graphics_context_set_fill_color(ctx, detail_window->highlight_color);
   graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w,
@@ -416,7 +417,7 @@ detail_window->callbacks = detail_window_callbacks;
   layer_set_update_proc(detail_window->layer, layer_update_proc);
   layer_add_child(root, detail_window->layer);
   // create main text
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
   detail_window->main_text = text_layer_create(
     GRect(0, 65, bounds.size.w - ACTION_BAR_WIDTH, 36));
 #elif PBL_SDK_3
@@ -433,7 +434,7 @@ detail_window->callbacks = detail_window_callbacks;
   text_layer_set_background_color(detail_window->main_text, GColorClear);
   layer_add_child(root, text_layer_get_layer(detail_window->main_text));
   // create sub text
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
   detail_window->sub_text = text_layer_create(
     GRect(0, 145, bounds.size.w, 20));
     text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentCenter);
@@ -461,7 +462,7 @@ detail_window->callbacks = detail_window_callbacks;
   action_bar_layer_set_icon(detail_window->action, BUTTON_ID_DOWN, detail_window->delete_icon);
   // create status bar
 #ifdef PBL_SDK_3
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
   int16_t horiz_off = 0;
 #else
   int16_t horiz_off = ACTION_BAR_WIDTH;

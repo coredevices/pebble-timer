@@ -31,7 +31,7 @@
 #define COUNTDOWN_TIMER_SNOOZE_DELAY 60000 // milliseconds
 #define TIMER_MIN_LENGTH 5000 // milliseconds
 #define TIMELINE_MIN_LENGTH 900000 // milliseconds
-#define INACTIVITY_THRESHOLD 0 // length of time before refresh throttling in milliseconds
+#define INACTIVITY_THRESHOLD 900000 // length of time before refresh throttling in milliseconds
 #define INACTIVE_REFRESH_DELAY 1000 // ms between frames after throttling
 #define PIN_ACTION_CODE_TRUNCATION_LEVEL 100 // both the pin id and action code have to be stored
                                              // in the pins action code
@@ -296,9 +296,10 @@ static void detail_window_delete_timer_callback(CountdownTimer *countdown_timer,
     s_countdown_timers_count, countdown_timer);
   countdown_timer_destroy(countdown_timer);
   countdown_timer_list_remove(s_countdown_timers, &s_countdown_timers_count, timer_index);
-  // reload MenuWindow data
+  // reload MenuWindow data (no idea why, but this must be called twice or when the last timer
+  // is deleted, the "+" cell is stuck at the short cell height)
   menu_window_reload_data(s_menu_window);
-  menu_window_refresh(s_menu_window);
+  menu_window_reload_data(s_menu_window);
   // pop detail off stack
   detail_window_pop(s_detail_window, true);
 

@@ -412,11 +412,10 @@ int64_t countdown_timer_get_current_time(CountdownTimer *countdown_timer) {
  */
 
 void countdown_timer_rand_id(CountdownTimer *countdown_timer, int32_t *current_id_max) {
-  // set the id equal to the timers pointer
-  // this is guarantied to be unique and since only the last 16 bits of the pointer are used
-  // in pebble's memory addresses, the value is also guarantied to be small enough
-  // for my other functions (embedding the pin actions into the id for the pin)
-  countdown_timer->id = (*current_id_max)++;
+  // set the id equal to the current epoch in seconds
+  // this guaranties that the same ID will never be given unless called twice in the same second,
+  // which cannot happen as the user cannot create two timers that quickly
+  countdown_timer->id = time(NULL);
 }
 
 

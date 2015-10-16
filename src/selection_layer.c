@@ -118,7 +118,7 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
       bg_color = data->active_background_color;
     }
     graphics_context_set_fill_color(ctx, bg_color);
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
     rect.origin.y -= (rect.size.w - rect.size.h) / 2;
     rect.size.h = rect.size.w;
     graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
@@ -190,7 +190,7 @@ static void prv_draw_slider_slide(Layer *layer, GContext *ctx) {
 
 #ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
     rect.origin.y -= (rect.size.w - rect.size.h) / 2;
     rect.size.h = rect.size.w;
     graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
@@ -233,7 +233,7 @@ static void prv_draw_slider_settle(Layer *layer, GContext *ctx) {
   GRect rect = GRect(x_offset, 0, current_width, layer_get_bounds(layer).size.h);
 #ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
     rect.origin.y -= (rect.size.w - rect.size.h) / 2;
     rect.size.h = rect.size.w;
     graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);

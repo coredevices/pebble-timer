@@ -115,7 +115,7 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
  */
 
 static void layers_center_in_window(PopupWindow *popup_window) {
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
   int16_t horiz_off = 0;
 #else
   int16_t horiz_off = ACTION_BAR_WIDTH;

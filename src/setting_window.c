@@ -223,7 +223,7 @@ SettingWindow *setting_window_create(SettingWindowCallbacks setting_window_callb
       layer_add_child(root, text_layer_get_layer(setting_window->sub_text));
       // create selection layer
       uint8_t num_cells = 3;
-#ifdef PBL_DISP_SHAPE_ROUND
+#ifdef PBL_ROUND
       setting_window->selection = selection_layer_create(GRect(26, 75, 128, 34), num_cells);
 #elif PBL_SDK_3
       setting_window->selection = selection_layer_create(GRect(8, 75, 128, 34), num_cells);
