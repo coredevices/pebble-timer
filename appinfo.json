@@ -1,9 +1,9 @@
 {
-  "uuid": "2389e202-3bdd-4f71-ab1c-4b76733410c5",
+  "uuid": "c64aae42-b822-4d6d-995b-bc7c38e843f4",
   "shortName": "Timer",
   "longName": "Timer",
   "companyName": "Pebble",
-  "versionLabel": "1.0",
+  "versionLabel": "1.1",
   "sdkVersion": "3",
   "targetPlatforms": ["aplite", "basalt", "chalk"],
   "watchapp": {
