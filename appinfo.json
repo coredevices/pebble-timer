@@ -149,11 +149,6 @@
         "name": "IMAGE_ICON",
         "file": "images/image_system_icon.png",
         "menuIcon": true
-      },
-      {
-        "type": "png",
-        "name": "IMAGE_WAVES",
-        "file": "images/image_waves.png"
       }
       ]
   }
