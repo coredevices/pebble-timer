@@ -129,10 +129,6 @@ static void app_timer_callback(void *data) {
   // cap refresh rate if inactive
   if (inactivity_duration > INACTIVITY_THRESHOLD) {
     refresh_rate = (refresh_rate > INACTIVE_REFRESH_DELAY) ? refresh_rate : INACTIVE_REFRESH_DELAY;
-    detail_window_set_power_saver_mode(s_detail_window, true);
-  }
-  else {
-    detail_window_set_power_saver_mode(s_detail_window, false);
   }
   s_app_timer = app_timer_register(refresh_rate, app_timer_callback, NULL);
 }

@@ -64,7 +64,6 @@ struct DetailWindow {
   char        sub_buff[12];           //< text buffer for sub_text
 
   bool        animation_update_needed;    //< whether it needs to be refreshed
-  bool        power_saver_mode;           //< whether it is in power saver mode or not
 
   CountdownTimer *countdown_timer;        //< the CountdownTimer being shown
 };
@@ -411,14 +410,4 @@ void detail_window_set_highlight_color(DetailWindow *detail_window, GColor color
 bool detail_window_get_update_needed(DetailWindow *detail_window) {
   return detail_window->animation_update_needed ||
     !countdown_timer_get_paused(detail_window->countdown_timer);
-}
-
-
-
-/*
- * sets whether it is in power saver mode
- */
-
-void detail_window_set_power_saver_mode(DetailWindow *detail_window, bool mode) {
-  detail_window->power_saver_mode = mode;
 }

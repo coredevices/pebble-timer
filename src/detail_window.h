@@ -232,16 +232,3 @@ void detail_window_set_highlight_color(DetailWindow *detail_window, GColor color
  */
 
 bool detail_window_get_update_needed(DetailWindow *detail_window);
-
-
-
-/*
- * Function:  detail_window_set_power_saver_mode
- * -----------------------------------------------
- * sets whether it is in power saver mode or not
- *
- *  detail_window: a pointer to the DetailWindow to set the mode of
- *  mode: a boolean for if it is on
- */
-
-void detail_window_set_power_saver_mode(DetailWindow *detail_window, bool mode);
