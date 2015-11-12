@@ -191,6 +191,14 @@ bool popup_window_get_topmost_window(PopupWindow *popup_window);
 
 void popup_window_set_auto_close_duration(PopupWindow *popup_window, int64_t duration);
 
+/*
+ * Function:    popup_window_set_vibes
+ * -------------------------------------------------
+ * sets up an app_timer callback to run multiple instances
+ * of a vibration pattern
+ */
+
+void popup_window_set_vibes();
 
 
 /*
