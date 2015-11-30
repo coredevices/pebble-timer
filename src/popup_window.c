@@ -181,17 +181,16 @@ static void layers_center_in_window(PopupWindow *popup_window) {
  */
 static void app_timer_vibe_callback(void *data) {
   int num_vibes_left = (int)data;
-  if(num_vibes_left != 0) {
+  if (num_vibes_left != 0) {
     // start vibration
     static const uint32_t vibe_seg[] = {300, 200, 300, 200, 300};
-    static VibePattern pat_vibe = {
+    const VibePattern pat_vibe = {
       .durations = vibe_seg,
       .num_segments = ARRAY_LENGTH(vibe_seg),
     };
     vibes_enqueue_custom_pattern(pat_vibe);
 
     --num_vibes_left;
-    APP_LOG(APP_LOG_LEVEL_ERROR, "%d", num_vibes_left);
     s_app_timer = app_timer_register(2300, app_timer_vibe_callback, (void*)num_vibes_left);
   }
 }

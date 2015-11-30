@@ -19,9 +19,9 @@
  *
  */
 
- #include <pebble.h>
- #include "menu_window.h"
- #include "countdown_timer.h"
+#include <pebble.h>
+#include "menu_window.h"
+#include "countdown_timer.h"
 
 // Constants
 #ifdef PBL_ROUND

@@ -63,7 +63,7 @@ static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResul
 
 // ********** Initialize/De-initialize ********** //
 // start phone connection
-void phone_connect(void){
+void phone_connect(void) {
   // register callbacks
   app_message_register_inbox_dropped(inbox_dropped_callback);
   app_message_register_outbox_failed(outbox_failed_callback);
@@ -73,7 +73,7 @@ void phone_connect(void){
 }
 
 // stop phone connection
-void phone_disconnect(void){
+void phone_disconnect(void) {
   // unregister callbacks
   app_message_deregister_callbacks();
 }

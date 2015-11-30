@@ -287,7 +287,7 @@ int16_t countdown_timer_list_get_timer_index(CountdownTimer **timer_array,
 CountdownTimer *countdown_timer_list_get_closest_timer(CountdownTimer **timer_array,
                                                        uint8_t timer_array_count) {
   CountdownTimer *countdown_timer = NULL;
-  for (uint8_t ii = 0; ii < timer_array_count; ii++){
+  for (uint8_t ii = 0; ii < timer_array_count; ii++) {
     if (countdown_timer_get_paused(timer_array[ii])) {
       continue;
     }
@@ -307,7 +307,7 @@ CountdownTimer *countdown_timer_list_get_closest_timer(CountdownTimer **timer_ar
 
 CountdownTimer *countdown_timer_list_get_timer_by_id(CountdownTimer **timer_array,
                                                      uint8_t timer_array_count, int32_t id) {
-  for (uint8_t ii = 0; ii < timer_array_count; ii++){
+  for (uint8_t ii = 0; ii < timer_array_count; ii++) {
     if (countdown_timer_get_id(timer_array[ii]) == id) {
       return timer_array[ii];
     }
@@ -326,7 +326,7 @@ CountdownTimer *countdown_timer_list_get_timer_by_id(CountdownTimer **timer_arra
  */
 
 void countdown_timer_list_destroy_all(CountdownTimer **timer_array, uint8_t *timer_array_count) {
-  for (uint8_t ii = 0; ii < (*timer_array_count); ii++){
+  for (uint8_t ii = 0; ii < (*timer_array_count); ii++) {
     countdown_timer_destroy(timer_array[ii]);
   }
   (*timer_array_count) = 0;
@@ -341,7 +341,7 @@ void countdown_timer_list_destroy_all(CountdownTimer **timer_array, uint8_t *tim
 void countdown_timer_list_save(CountdownTimer **timer_array, uint8_t timer_array_count,
                                uint32_t key) {
   persist_write_int(key++, timer_array_count);
-  for (uint8_t ii = 0; ii < timer_array_count; ii++){
+  for (uint8_t ii = 0; ii < timer_array_count; ii++) {
     persist_write_data(key++, timer_array[ii], sizeof(CountdownTimer));
   }
 }

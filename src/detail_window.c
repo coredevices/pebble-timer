@@ -30,11 +30,11 @@
  *
  */
 
- #include <pebble.h>
- #include "detail_window.h"
- #include "countdown_timer.h"
+#include <pebble.h>
+#include "detail_window.h"
+#include "countdown_timer.h"
 
- #define TEXT_LAYER_MAX_LARGE_CHARACTERS 5
+#define TEXT_LAYER_MAX_LARGE_CHARACTERS 5
 
 
 
@@ -228,7 +228,6 @@ detail_window->callbacks = detail_window_callbacks;
   detail_window->main_text = text_layer_create(
     GRect(0, 7, bounds.size.w - ACTION_BAR_WIDTH, 36));
 #endif
-  //text_layer_set_text_color(detail_window->main_text, GColorBlack);
   text_layer_set_font(detail_window->main_text, detail_window->large_font);
   text_layer_set_text(detail_window->main_text, "00:00");
   text_layer_set_text_alignment(detail_window->main_text, GTextAlignmentCenter);
@@ -248,7 +247,6 @@ detail_window->callbacks = detail_window_callbacks;
     GRect(10, 122, bounds.size.w - ACTION_BAR_WIDTH, 20));
   text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
 #endif
-  //text_layer_set_text_color(detail_window->main_text, GColorBlack);
   text_layer_set_font(detail_window->sub_text, detail_window->small_font);
   text_layer_set_text(detail_window->sub_text, "00:00");
   text_layer_set_background_color(detail_window->sub_text, GColorClear);
