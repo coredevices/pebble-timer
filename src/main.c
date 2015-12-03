@@ -9,15 +9,15 @@
  *
  */
 
- #include <pebble.h>
- #include "countdown_timer.h"
- #include "menu_window.h"
- #include "detail_window.h"
- #include "setting_window.h"
- #include "popup_window.h"
- #include "phone.h"
+#include <pebble.h>
+#include "countdown_timer.h"
+#include "menu_window.h"
+#include "detail_window.h"
+#include "setting_window.h"
+#include "popup_window.h"
+#include "phone.h"
 
- // constants
+// constants
 #define COUNTDOWN_TIMER_PERSIST_KEY 72445846
 #define COUNTDOWN_TIMER_ID_PERSIST_KEY 3568356
 #define PERSIST_VERSION 1
@@ -86,15 +86,7 @@ static void app_timer_callback(void *data) {
 #endif
     popup_window_add_action_bar(s_popup_window);
     popup_window_push(s_popup_window, true);
-    // start vibration
-    static const uint32_t vibe_seg[] = {300, 200, 300, 200, 300, 1000, 300,
-    200, 300, 200, 300, 1000, 300, 200, 300, 200, 300, 1000, 300, 200, 300,
-    200, 300, 1000, 300, 200, 300, 200, 300, 1000, 300, 200, 300, 200, 300};
-    static VibePattern pat_vibe = {
-      .durations = vibe_seg,
-      .num_segments = ARRAY_LENGTH(vibe_seg),
-    };
-    vibes_enqueue_custom_pattern(pat_vibe);
+    popup_window_set_vibes();
 
     // we want the alarm going off to count as activity
     s_last_activity = countdown_timer_get_epoch_ms();
@@ -176,7 +168,7 @@ static void popup_window_stop_timer_callback(void *context) {
  * simple window to create or edit timer durations
  */
 
-static void setting_window_complete_callback(int64_t duration, void *context){
+static void setting_window_complete_callback(int64_t duration, void *context) {
   SettingWindow *setting_window = (SettingWindow*)context;
   CountdownTimer *countdown_timer = setting_window_get_timer(setting_window);
   // check if long enough

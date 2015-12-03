@@ -46,6 +46,17 @@
 #include "popup_window.h"
 #include "countdown_timer.h"
 
+/*******************************************************************************
+ * CONSTANTS
+ */
+
+#define NUM_VIBE_INTERVALS 6
+
+/*******************************************************************************
+ * MAIN LOCAL VARIABLES
+ */
+
+static AppTimer *s_app_timer = NULL;
 
 
 /*******************************************************************************
@@ -163,6 +174,29 @@ static void layers_center_in_window(PopupWindow *popup_window) {
  * CALLBACKS
  */
 
+ /*
+ * Vibe callback
+ *
+ * Timer finished vibration split into separate intervals
+ */
+static void app_timer_vibe_callback(void *data) {
+  int num_vibes_left = (int)data;
+  if (num_vibes_left != 0) {
+    // start vibration
+    static const uint32_t vibe_seg[] = {300, 200, 300, 200, 300};
+    const VibePattern pat_vibe = {
+      .durations = vibe_seg,
+      .num_segments = ARRAY_LENGTH(vibe_seg),
+    };
+    vibes_enqueue_custom_pattern(pat_vibe);
+
+    --num_vibes_left;
+    s_app_timer = app_timer_register(2300, app_timer_vibe_callback, (void*)num_vibes_left);
+  }
+}
+
+
+
 /*
  * UP click handler callback
  *
@@ -235,6 +269,7 @@ static void window_unload(Window *window) {
   // to cancel any vibrating alarm in the closing
   // callback of a PopupWindow, but in this case it
   // works and makes it much easier
+  app_timer_cancel(s_app_timer);
   vibes_cancel();
 }
 
@@ -396,6 +431,16 @@ void popup_window_set_auto_close_duration(PopupWindow *popup_window, int64_t dur
   else {
     popup_window->close_time = 0;
   }
+}
+
+
+
+/*
+ * sets up an app_timer callback to run multiple instances of a vibration pattern
+ */
+
+void popup_window_set_vibes() {
+  s_app_timer = app_timer_register(0, app_timer_vibe_callback, (void*)NUM_VIBE_INTERVALS);
 }
 
 

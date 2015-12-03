@@ -25,10 +25,10 @@
  *
  */
 
- #include <pebble.h>
- #include "setting_window.h"
- #include "countdown_timer.h"
- #include "selection_layer.h"
+#include <pebble.h>
+#include "setting_window.h"
+#include "countdown_timer.h"
+#include "selection_layer.h"
 
 #define MSEC_IN_SEC 1000
 #define MSEC_IN_MIN 60000

@@ -130,7 +130,7 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
     graphics_context_set_stroke_color(ctx, GColorBlack);
     graphics_draw_rect(ctx, rect);
     // position highlight
-    if (data->selected_cell_idx == i && !data->slide_amin_progress){
+    if (data->selected_cell_idx == i && !data->slide_amin_progress) {
       layer_set_frame(inverter_layer_get_layer(data->inverter), rect);
     }
 #endif
@@ -241,7 +241,7 @@ static void prv_draw_slider_settle(Layer *layer, GContext *ctx) {
     graphics_fill_rect(ctx, rect, 1, GCornerNone);
 #endif
 #else
-  if (data->slide_is_forward){
+  if (data->slide_is_forward) {
     rect.origin.x -= data->cell_widths[data->selected_cell_idx];
     rect.size.w += data->cell_widths[data->selected_cell_idx];
   }
@@ -447,7 +447,6 @@ static void prv_run_value_change_animation(Layer *layer) {
   Animation *bump_settle = prv_create_bump_settle_animation(layer);
   data->value_change_animation =
       animation_sequence_create(bump_text, bump_settle, NULL);
-  //animation_set_auto_destroy(selection_layer->value_change_animation, true);
   animation_schedule(data->value_change_animation);
 #else
   animation_schedule(bump_text);
@@ -566,7 +565,6 @@ static void prv_run_slide_animation(Layer *layer) {
   Animation *settle_animation = prv_create_slide_settle_animation(layer);
   data->next_cell_animation =
       animation_sequence_create(over_animation, settle_animation, NULL);
-  //animation_set_auto_destroy(selection_layer->next_cell_animation, true);
   animation_schedule(data->next_cell_animation);
 #else
   animation_schedule(over_animation);
@@ -715,7 +713,6 @@ void selection_layer_destroy(Layer* layer) {
   animation_unschedule_all();
   if (data) {
     selection_layer_deinit(layer);
-    //free(data);
   }
 }
 
