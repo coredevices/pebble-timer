@@ -391,3 +391,13 @@ void countdown_timer_format_text(int64_t value, char *buff, uint8_t size);
  */
 
 char *countdown_timer_format_own_buff(CountdownTimer *countdown_timer);
+
+
+CountdownTimer *countdown_timer_list_get_last_updated_timer(CountdownTimer **timer_array,
+                                                       uint8_t timer_array_count);
+
+CountdownTimer *countdown_timer_list_get_closest_timer_after(CountdownTimer **timer_array,
+                                                       uint8_t timer_array_count,
+                                                       CountdownTimer *after_countdown_timer);
+
+time_t countdown_timer_get_last_update(CountdownTimer *countdown_timer);

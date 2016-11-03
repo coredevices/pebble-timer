@@ -57,9 +57,7 @@ struct SettingWindow {
   TextLayer       *sub_text;          //< sub text at bottom for messages
   Layer           *selection;         //< SelectionLayer for input
   GColor          highlight_color;    //< color for selection highlights
-#ifdef PBL_SDK_3
   StatusBarLayer  *status;            //< status bar for Basalt
-#endif
   SettingWindowCallbacks callbacks;   //< callbacks
 
   CountdownTimer  *countdown_timer;   //< timer associated being set
@@ -89,12 +87,10 @@ static void update_sub_text(SettingWindow *setting_window) {
     text_layer_set_text(setting_window->sub_text, "");
     layer_set_hidden(text_layer_get_layer(setting_window->sub_text), false);
     return;
-  }
-  else if (duration < TIMELINE_MINIMUM_DURATION) {
+  } else if (duration < TIMELINE_MINIMUM_DURATION) {
     layer_set_hidden(text_layer_get_layer(setting_window->sub_text), true);
     return;
-  }
-  else {
+  } else {
     layer_set_hidden(text_layer_get_layer(setting_window->sub_text), false);
   }
 
@@ -104,8 +100,7 @@ static void update_sub_text(SettingWindow *setting_window) {
   struct tm *tick_time = localtime(&end);
   if (clock_is_24h_style()) {
     strftime(buff, sizeof(buff), "End: %k:%M", tick_time);
-  }
-  else {
+  } else {
     strftime(buff, sizeof(buff), "End: %l:%M %p", tick_time);
   }
   // set text
@@ -192,74 +187,11 @@ static void selection_handle_dec(unsigned index, uint8_t clicks, void *context) 
 SettingWindow *setting_window_create(SettingWindowCallbacks setting_window_callbacks) {
   SettingWindow *setting_window = (SettingWindow*)malloc(sizeof(SettingWindow));
   if (setting_window != NULL) {
-    setting_window->window = window_create();
-    setting_window->callbacks = setting_window_callbacks;
-    if (setting_window->window != NULL) {
-      // zero some values
-      setting_window->field_selection = 0;
-      setting_window->countdown_timer = NULL;
-      // get window parameters
-      Layer *root = window_get_root_layer(setting_window->window);
-      GRect bounds = layer_get_frame(root);
-      // main text
-#ifdef PBL_SDK_3
-      setting_window->main_text = text_layer_create(GRect(0, 30, bounds.size.w, 40));
-#else
-      setting_window->main_text = text_layer_create(GRect(0, 15, bounds.size.w, 40));
-#endif
-      text_layer_set_text(setting_window->main_text, "Set Timer");
-      text_layer_set_font(setting_window->main_text,
-        fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-      text_layer_set_text_alignment(setting_window->main_text, GTextAlignmentCenter);
-      layer_add_child(root, text_layer_get_layer(setting_window->main_text));
-      // sub text
-#ifdef PBL_SDK_3
-      setting_window->sub_text = text_layer_create(GRect(1, 125, bounds.size.w, 40));
-#else
-      setting_window->sub_text = text_layer_create(GRect(1, 110, bounds.size.w, 40));
-#endif
-      text_layer_set_text_alignment(setting_window->sub_text, GTextAlignmentCenter);
-      text_layer_set_font(setting_window->sub_text, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-      layer_add_child(root, text_layer_get_layer(setting_window->sub_text));
-      // create selection layer
-      uint8_t num_cells = 3;
-#ifdef PBL_ROUND
-      setting_window->selection = selection_layer_create(GRect(26, 75, 128, 34), num_cells);
-#elif PBL_SDK_3
-      setting_window->selection = selection_layer_create(GRect(8, 75, 128, 34), num_cells);
-#else
-      setting_window->selection = selection_layer_create(GRect(8, 60, 128, 34), num_cells);
-#endif
-      for (int i = 0; i < num_cells; i++) {
-        selection_layer_set_cell_width(setting_window->selection, i, 40);
-      }
-      selection_layer_set_cell_padding(setting_window->selection, 4);
-#ifdef PBL_COLOR
-      selection_layer_set_active_bg_color(setting_window->selection, GColorRed);
-      selection_layer_set_inactive_bg_color(setting_window->selection, GColorDarkGray);
-#endif
-      selection_layer_set_click_config_onto_window(
-        setting_window->selection, setting_window->window);
-      selection_layer_set_callbacks(setting_window->selection, setting_window,
-        (SelectionLayerCallbacks) {
-          .get_cell_text = selection_handle_get_text,
-          .complete = selection_handle_complete,
-          .increment = selection_handle_inc,
-          .decrement = selection_handle_dec,
-        });
-      layer_add_child(window_get_root_layer(setting_window->window), setting_window->selection);
 
-#ifdef PBL_SDK_3
-      // create status bar
-      setting_window->status = status_bar_layer_create();
-      status_bar_layer_set_colors(setting_window->status, GColorClear, GColorBlack);
-      layer_add_child(root, status_bar_layer_get_layer(setting_window->status));
-#endif
-      return setting_window;
-    }
+    *setting_window = (SettingWindow) { .callbacks = setting_window_callbacks };
+
+    return setting_window;
   }
-  // error handling
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to create SettingWindow");
   return NULL;
 }
 
@@ -271,18 +203,70 @@ SettingWindow *setting_window_create(SettingWindowCallbacks setting_window_callb
 
 void setting_window_destroy(SettingWindow *setting_window) {
   if (setting_window != NULL) {
-#ifdef PBL_SDK_3
-    status_bar_layer_destroy(setting_window->status);
-#endif
-    selection_layer_destroy(setting_window->selection);
-    text_layer_destroy(setting_window->sub_text);
-    text_layer_destroy(setting_window->main_text);
     free(setting_window);
     setting_window = NULL;
     return;
   }
-  // error handling
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Attempted to free NULL SettingWindow");
+}
+
+
+static void prv_window_load(Window* window){
+  SettingWindow *setting_window = window_get_user_data(window);
+  // get window parameters
+  Layer *root = window_get_root_layer(setting_window->window);
+  GRect bounds = layer_get_frame(root);
+  // main text
+  setting_window->main_text = text_layer_create(GRect(0, 30, bounds.size.w, 40));
+  text_layer_set_text(setting_window->main_text, "Set Timer");
+  text_layer_set_font(setting_window->main_text,
+    fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(setting_window->main_text, GTextAlignmentCenter);
+  layer_add_child(root, text_layer_get_layer(setting_window->main_text));
+  // sub text
+  setting_window->sub_text = text_layer_create(GRect(1, 125, bounds.size.w, 40));
+  text_layer_set_text_alignment(setting_window->sub_text, GTextAlignmentCenter);
+  text_layer_set_font(setting_window->sub_text, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  layer_add_child(root, text_layer_get_layer(setting_window->sub_text));
+  // create selection layer
+  uint8_t num_cells = 3; // hours, minutes, seconds
+#ifdef PBL_ROUND
+  setting_window->selection = selection_layer_create(GRect(26, 75, bounds.size.w-52, 34), num_cells);
+#else
+  setting_window->selection = selection_layer_create(GRect(8, 75, bounds.size.w-16, 34), num_cells);
+#endif
+  for (int i = 0; i < num_cells; i++) {
+    selection_layer_set_cell_width(setting_window->selection, i, 40);
+  }
+  selection_layer_set_cell_padding(setting_window->selection, 4);
+  selection_layer_set_active_bg_color(setting_window->selection, setting_window->highlight_color);
+  selection_layer_set_inactive_bg_color(setting_window->selection, GColorDarkGray);
+  selection_layer_set_click_config_onto_window(
+    setting_window->selection, setting_window->window);
+  selection_layer_set_callbacks(setting_window->selection, setting_window,
+    (SelectionLayerCallbacks) {
+      .get_cell_text = selection_handle_get_text,
+      .complete = selection_handle_complete,
+      .increment = selection_handle_inc,
+      .decrement = selection_handle_dec,
+    });
+  layer_add_child(window_get_root_layer(setting_window->window), setting_window->selection);
+
+  // create status bar
+  setting_window->status = status_bar_layer_create();
+  status_bar_layer_set_colors(setting_window->status, GColorClear, GColorBlack);
+  layer_add_child(root, status_bar_layer_get_layer(setting_window->status));
+
+  update_sub_text(setting_window);
+}
+
+static void prv_window_unload(Window* window){
+  SettingWindow *setting_window = window_get_user_data(window);
+  status_bar_layer_destroy(setting_window->status);
+  selection_layer_destroy(setting_window->selection);
+  text_layer_destroy(setting_window->sub_text);
+  text_layer_destroy(setting_window->main_text);
+  window_destroy(setting_window->window);
+  setting_window->window = NULL;
 }
 
 
@@ -290,9 +274,19 @@ void setting_window_destroy(SettingWindow *setting_window) {
 /*
  * push the window onto the stack
  */
-
 void setting_window_push(SettingWindow *setting_window, bool animated) {
-  window_stack_push(setting_window->window, animated);
+  if (setting_window->window == NULL) {
+    setting_window->window = window_create();
+    window_set_user_data(setting_window->window, setting_window);
+    window_set_window_handlers(setting_window->window,
+      (WindowHandlers){
+        .load = prv_window_load,
+        .unload = prv_window_unload
+      });
+  }
+  if (setting_window->window) {
+    window_stack_push(setting_window->window, animated);
+  }
 }
 
 
@@ -302,7 +296,9 @@ void setting_window_push(SettingWindow *setting_window, bool animated) {
  */
 
 void setting_window_pop(SettingWindow *setting_window, bool animated) {
-  window_stack_remove(setting_window->window, animated);
+  if (setting_window->window) {
+    window_stack_remove(setting_window->window, animated);
+  }
 }
 
 
@@ -334,7 +330,9 @@ void setting_window_set_timer(SettingWindow *setting_window, CountdownTimer *cou
   setting_window->field_values[1] = duration % MSEC_IN_HR / MSEC_IN_MIN;
   setting_window->field_values[2] = duration % MSEC_IN_MIN / MSEC_IN_SEC;
   // change text
-  update_sub_text(setting_window);
+  if (setting_window->window) {
+    update_sub_text(setting_window);
+  }
 }
 
 
@@ -358,5 +356,4 @@ CountdownTimer *setting_window_get_timer(SettingWindow *setting_window) {
 
 void setting_window_set_highlight_color(SettingWindow *setting_window, GColor color) {
   setting_window->highlight_color = color;
-  selection_layer_set_active_bg_color(setting_window->selection, color);
 }

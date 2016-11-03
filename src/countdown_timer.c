@@ -77,6 +77,7 @@ struct CountdownTimer {
   int32_t     id;           //< random unique integer for timeline pins
   char        buff[16];     //< buffer for printing time string into
   bool        paused;       //< current state
+  time_t      last_update;
 } __attribute__((__packed__));
 
 
@@ -137,6 +138,7 @@ void countdown_timer_start(CountdownTimer *countdown_timer) {
   if (countdown_timer->paused) {
     countdown_timer->start_ms += countdown_timer_get_epoch_ms();
     countdown_timer->paused = false;
+    countdown_timer->last_update = time(NULL);
   }
 }
 
@@ -153,6 +155,7 @@ void countdown_timer_stop(CountdownTimer *countdown_timer, int32_t *current_id_m
   if (!countdown_timer->paused) {
     countdown_timer->start_ms -= countdown_timer_get_epoch_ms();
     countdown_timer->paused = true;
+    countdown_timer->last_update = time(NULL);
     // give a new ID for pins
     countdown_timer_rand_id(countdown_timer, current_id_max);
   }
@@ -175,6 +178,7 @@ void countdown_timer_update(CountdownTimer *countdown_timer, int64_t duration,
   int64_t now = countdown_timer_get_epoch_ms();
   countdown_timer->start_ms =  ((countdown_timer->paused) ? 0 : now)
     + duration - countdown_timer->duration_ms;
+  countdown_timer->last_update = time(NULL);
 }
 
 
@@ -218,8 +222,7 @@ void countdown_timer_list_add(CountdownTimer **timer_array, uint8_t timer_array_
                               uint8_t *timer_array_count, CountdownTimer *countdown_timer) {
   if ((*timer_array_count) == timer_array_max) {
     countdown_timer_destroy(timer_array[timer_array_max - 1]);
-  }
-  else {
+  } else {
     (*timer_array_count)++;
   }
   memmove(&timer_array[1], &timer_array[0], sizeof(CountdownTimer*) * (timer_array_max - 1));
@@ -299,6 +302,39 @@ CountdownTimer *countdown_timer_list_get_closest_timer(CountdownTimer **timer_ar
   return countdown_timer;
 }
 
+CountdownTimer *countdown_timer_list_get_closest_timer_after(CountdownTimer **timer_array,
+                                                       uint8_t timer_array_count,
+                                                       CountdownTimer *after_countdown_timer) {
+  CountdownTimer *countdown_timer = NULL;
+  for (uint8_t ii = 0; ii < timer_array_count; ii++) {
+    if (countdown_timer_get_paused(timer_array[ii]) || timer_array[ii] == after_countdown_timer) {
+      continue;
+    }
+    if (countdown_timer ==  NULL || countdown_timer_get_current_time(timer_array[ii]) <
+          countdown_timer_get_current_time(countdown_timer)) {
+      countdown_timer = timer_array[ii];
+    }
+  }
+  return countdown_timer;
+}
+
+/*
+ * gets the last updated CountdownTimer
+ *
+ * finds the CountdownTimer which was updated the most recently
+ */
+
+CountdownTimer *countdown_timer_list_get_last_updated_timer(CountdownTimer **timer_array,
+                                                       uint8_t timer_array_count) {
+  CountdownTimer *countdown_timer = NULL;
+  for (uint8_t ii = 0; ii < timer_array_count; ii++) {
+    if (countdown_timer ==  NULL || timer_array[ii]->last_update > countdown_timer->last_update) {
+      countdown_timer = timer_array[ii];
+    }
+  }
+  return countdown_timer;
+}
+
 
 
 /*
@@ -359,8 +395,7 @@ void countdown_timer_list_load(CountdownTimer **timer_array, uint8_t *timer_arra
     timer_array[ii] = (CountdownTimer*)malloc(sizeof(CountdownTimer));
     if (timer_array[ii]) {
       persist_read_data(key++, timer_array[ii], sizeof(CountdownTimer));
-    }
-    else {
+    } else {
       APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to allocate memory while loading timers!");
       return;
     }
@@ -460,8 +495,7 @@ void countdown_timer_format_text(int64_t value, char *buff, uint8_t size) {
   uint8_t sec = value % MSEC_IN_MIN / MSEC_IN_SEC;
   if (hr > 0) {
     snprintf(buff, size, "%d:%02d:%02d", hr, min, sec);
-  }
-  else {
+  } else {
     snprintf(buff, size, "%d:%02d", min, sec);
   }
 }
@@ -477,4 +511,9 @@ char *countdown_timer_format_own_buff(CountdownTimer *countdown_timer) {
   countdown_timer_format_text(countdown_timer_get_current_time(countdown_timer),
     countdown_timer->buff, sizeof(countdown_timer->buff));
   return countdown_timer->buff;
+}
+
+
+time_t countdown_timer_get_last_update(CountdownTimer *countdown_timer) {
+  return countdown_timer->last_update;
 }

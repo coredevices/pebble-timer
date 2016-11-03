@@ -22,11 +22,6 @@
 #define COUNTDOWN_TIMER_ID_PERSIST_KEY 3568356
 #define PERSIST_VERSION 1
 #define PERSIST_VERSION_KEY 46134672
-#ifdef PBL_COLOR
-#define HIGHLIGHT_COLOR GColorPictonBlue
-#else
-#define HIGHLIGHT_COLOR GColorWhite
-#endif
 #define COUNTDOWN_TIMERS_MAX 8
 #define COUNTDOWN_TIMER_SNOOZE_DELAY 60000 // milliseconds
 #define TIMER_MIN_LENGTH 5000 // milliseconds
@@ -70,20 +65,20 @@ static void app_timer_callback(void *data) {
   // check for expired timers
   CountdownTimer *countdown_timer = countdown_timer_check_ended(s_countdown_timers,
     s_countdown_timers_count);
+
   if (countdown_timer != NULL) {
     // deep refresh the DetailWindow in case it was that timer
     detail_window_deep_refresh(s_detail_window);
     // show timer confirmation window
     popup_window_set_countdown_timer(s_popup_window, countdown_timer);
     popup_window_set_title(s_popup_window, "Time's Up!");
-    popup_window_set_highlight_color(s_popup_window, HIGHLIGHT_COLOR);
-#ifdef PBL_SDK_3
-    popup_window_set_pdc(s_popup_window, RESOURCE_ID_ICON_ALARM_CLOCK, true);
-    popup_window_set_auto_close_duration(s_popup_window, 15000);
-#else
+    popup_window_set_highlight_color(s_popup_window, PBL_IF_COLOR_ELSE(GColorPictonBlue, GColorWhite));
+#ifdef PBL_PLATFORM_APLITE
     popup_window_set_image(s_popup_window, RESOURCE_ID_IMAGE_ALARM);
-    popup_window_set_auto_close_duration(s_popup_window, 15000);
+#else
+    popup_window_set_pdc(s_popup_window, RESOURCE_ID_ICON_ALARM_CLOCK, true);
 #endif
+    popup_window_set_auto_close_duration(s_popup_window, 15000);
     popup_window_add_action_bar(s_popup_window);
     popup_window_push(s_popup_window, true);
     popup_window_set_vibes();
@@ -179,6 +174,7 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
     }
     return;
   }
+
   // check if new timer or editing
   if (countdown_timer == NULL) {
     countdown_timer = countdown_timer_create(duration, &s_countdown_timer_id_max);
@@ -189,15 +185,15 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
     menu_window_reload_data(s_menu_window);
     menu_window_refresh(s_menu_window);
     detail_window_set_countdown_timer(s_detail_window, countdown_timer);
-    detail_window_deep_refresh(s_detail_window);
-    detail_window_push(s_detail_window, true);
     setting_window_pop(setting_window, false);
+    detail_window_push(s_detail_window, true);
+    detail_window_deep_refresh(s_detail_window);
+
     // delete the Timeline pin
     if (countdown_timer_get_duration(countdown_timer) >= TIMELINE_MIN_LENGTH) {
       phone_send_pin(countdown_timer);
     }
-  }
-  else {
+  } else {
     countdown_timer_update(countdown_timer, duration, true);
     countdown_timer_start(countdown_timer);
     detail_window_deep_refresh(s_detail_window);
@@ -249,8 +245,7 @@ static void detail_window_playpause_timer_callback(CountdownTimer *countdown_tim
     }
     // start the timer
     countdown_timer_start(countdown_timer);
-  }
-  else {
+  } else {
     // delete the Timeline pin
     if (countdown_timer_get_duration(countdown_timer) >= TIMELINE_MIN_LENGTH) {
       phone_delete_pin(countdown_timer);
@@ -293,14 +288,14 @@ static void detail_window_delete_timer_callback(CountdownTimer *countdown_timer,
 
   // show timer confirmation window
   popup_window_set_title(s_popup_window, "Timer Deleted");
-#ifdef PBL_SDK_3
-  popup_window_set_highlight_color(s_popup_window, HIGHLIGHT_COLOR);
+  popup_window_set_highlight_color(s_popup_window, PBL_IF_COLOR_ELSE(GColorPictonBlue, GColorWhite));
+#ifdef PBL_PLATFORM_APLITE
+  popup_window_set_image(s_popup_window, RESOURCE_ID_IMAGE_SHREADER);
+  popup_window_set_auto_close_duration(s_popup_window, 1000);
+#else
   popup_window_set_pdc(s_popup_window, RESOURCE_ID_ICON_DELETED, false);
   int64_t pdc_duration = popup_window_get_pdc_duration(s_popup_window);
   popup_window_set_auto_close_duration(s_popup_window, pdc_duration);
-#else
-  popup_window_set_image(s_popup_window, RESOURCE_ID_IMAGE_SHREADER);
-  popup_window_set_auto_close_duration(s_popup_window, 1000);
 #endif
   popup_window_remove_action_bar(s_popup_window);
   popup_window_push(s_popup_window, true);
@@ -355,12 +350,11 @@ static void menu_window_click_callback(uint8_t index, void *context) {
   if (index == 0) {
     setting_window_set_timer(s_setting_window, NULL);
     setting_window_push(s_setting_window, true);
-  }
-  else {
+  } else {
     // show timer in detail window
     detail_window_set_countdown_timer(s_detail_window, s_countdown_timers[index - 1]);
-    detail_window_deep_refresh(s_detail_window);
     detail_window_push(s_detail_window, true);
+    detail_window_deep_refresh(s_detail_window);
     // start timer refreshing quickly
     if (s_app_timer != NULL) {
       app_timer_reschedule(s_app_timer, 10);
@@ -402,7 +396,7 @@ static void initialize(void) {
     .clicked = menu_window_click_callback,
   };
   s_menu_window = menu_window_create(menu_callbacks, true);
-  menu_window_set_highlight_color(s_menu_window, HIGHLIGHT_COLOR);
+  menu_window_set_highlight_color(s_menu_window, PBL_IF_COLOR_ELSE(GColorPictonBlue, GColorBlack));
   menu_window_refresh(s_menu_window);
 
   // create detail window
@@ -412,14 +406,14 @@ static void initialize(void) {
     .delete_timer = detail_window_delete_timer_callback,
   };
   s_detail_window = detail_window_create(detail_callbacks);
-  detail_window_set_highlight_color(s_detail_window, HIGHLIGHT_COLOR);
+  detail_window_set_highlight_color(s_detail_window,PBL_IF_COLOR_ELSE(GColorPictonBlue, GColorWhite));
 
   // create setting window
   SettingWindowCallbacks setting_callbacks = {
     .setting_complete = setting_window_complete_callback,
   };
   s_setting_window = setting_window_create(setting_callbacks);
-  setting_window_set_highlight_color(s_setting_window, HIGHLIGHT_COLOR);
+  setting_window_set_highlight_color(s_setting_window, PBL_IF_COLOR_ELSE(GColorPictonBlue, GColorBlack));
 
   // create pop-up window
   PopupWindowCallbacks popup_callbacks = {
@@ -438,8 +432,8 @@ static void initialize(void) {
       if (countdown_timer != NULL) {
         // show timer in detail window
         detail_window_set_countdown_timer(s_detail_window, countdown_timer);
-        detail_window_deep_refresh(s_detail_window);
         detail_window_push(s_detail_window, true);
+        detail_window_deep_refresh(s_detail_window);
       }
     }
   }
@@ -458,6 +452,44 @@ static void initialize(void) {
   s_last_activity = countdown_timer_get_epoch_ms();
 }
 
+static void prv_add_slice(AppGlanceReloadSession *session, const char *str, time_t expiration_time) {
+  const AppGlanceSlice slice = {
+    .layout.subtitle_template_string = str,
+    .expiration_time = expiration_time
+  };
+  AppGlanceResult result = app_glance_add_slice(session, slice);
+  if (result != APP_GLANCE_RESULT_SUCCESS) {
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Error : %d", result);
+  }
+}
+
+// update app glance
+static void prv_update_app_glance(AppGlanceReloadSession *session, size_t limit, void *context) {
+  // Ensure we have sufficient slices
+  if (limit < 1) {
+    return;
+  }
+
+  time_t expiration_time = APP_GLANCE_SLICE_NO_EXPIRATION;
+
+  CountdownTimer *countdown_timer = countdown_timer_list_get_closest_timer(s_countdown_timers,
+    s_countdown_timers_count);
+
+  if (countdown_timer != NULL) {
+    expiration_time = time(NULL) + countdown_timer_get_current_time(countdown_timer) / 1000; // expires when the timer is ended
+    char buff_glance[40] = {0}; // {time_until(4294967295)|format('%fT')}
+    snprintf(buff_glance, sizeof(buff_glance), "{time_until(%ld)|format('%%fT')}", expiration_time);
+    prv_add_slice(session, buff_glance, expiration_time);
+  } else {
+    countdown_timer = countdown_timer_list_get_last_updated_timer(s_countdown_timers, s_countdown_timers_count);
+    if (countdown_timer != NULL) {
+      expiration_time = countdown_timer_get_last_update(countdown_timer) + SECONDS_PER_HOUR;
+      if (expiration_time > time(NULL)) { // don't display the appglance if the timer is paused for > 1 hour
+        prv_add_slice(session, countdown_timer_format_own_buff(countdown_timer), expiration_time);
+      }
+    }
+  }
+}
 
 
 /*
@@ -485,6 +517,9 @@ static void deinitialize(void) {
     // add one second to ensure it opens straight to the PopupWindow
     wakeup_schedule(timestamp + 1, 0, true);
   }
+
+  // update appglance
+  app_glance_reload(prv_update_app_glance, NULL);
 
   // destroy classes
   popup_window_destroy(s_popup_window);

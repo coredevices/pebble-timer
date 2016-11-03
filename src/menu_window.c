@@ -52,9 +52,7 @@ struct MenuWindow {
   MenuLayer   *menu;      //< menu layer displaying timer list
   TextLayer   *text;      //< text layer which displays "No Timers"
   GBitmap     *play_icon, *pause_icon;    //< menu layer icons
-#ifdef PBL_SDK_3
   StatusBarLayer      *status;            //< status bar for Basalt
-#endif
   MenuWindowCallbacks callbacks;          //< menu layer callbacks
 };
 
@@ -125,7 +123,6 @@ static void menu_cell_draw(GContext *ctx, const Layer *layer, char *title, GBitm
       center_text + img_bounds.size.w;
     txt_bounds.origin.y = (lay_bounds.size.h - txt_bounds.size.h - prg_bounds.size.h) / 2 -
       txt_bounds.size.h * MENU_CELL_TEXT_Y_BUFF_RATIO;
-    graphics_context_set_text_color(ctx, GColorBlack);
     graphics_draw_text(ctx, title, font, txt_bounds, GTextOverflowModeFill, GTextAlignmentLeft,
       NULL);
   }
@@ -133,7 +130,13 @@ static void menu_cell_draw(GContext *ctx, const Layer *layer, char *title, GBitm
     img_bounds.origin.x = (lay_bounds.size.w - txt_bounds.size.w - img_bounds.size.w) / 2 *
       center_text;
     img_bounds.origin.y = (lay_bounds.size.h - img_bounds.size.h - prg_bounds.size.h) / 2;
+#ifdef PBL_COLOR
     graphics_context_set_compositing_mode(ctx, GCompOpAnd);
+#else
+    if (menu_cell_layer_is_highlighted(layer)) {
+      graphics_context_set_compositing_mode(ctx, GCompOpAssignInverted);
+    }
+#endif
     graphics_draw_bitmap_in_rect(ctx, icon, img_bounds);
   }
   if (progress) {
@@ -176,15 +179,20 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
     if (progress >= TRIG_MAX_ANGLE) {
       progress = 0;
     }
-    GColor prg_back = GColorWhite;
-    if (cell_index->row != menu_layer_get_selected_index(menu_window->menu).row) {
-      prg_back = COLOR_FALLBACK(GColorLightGray, GColorWhite);
+    GColor progress_bg_color = PBL_IF_COLOR_ELSE(GColorWhite, GColorLightGray);
+    GColor progress_fg_color  = PBL_IF_COLOR_ELSE(GColorBlack, GColorWhite);
+    if (!menu_cell_layer_is_highlighted(cell_layer)) {
+#ifdef PBL_BW
+      progress_fg_color  = GColorBlack;
+#else
+      progress_bg_color = GColorLightGray;
 #ifdef PBL_ROUND
       progress = 0;
 #endif
+#endif
     }
-    menu_cell_draw(ctx, cell_layer, buff, icon, progress, font, MENU_CELL_CENTERED, GColorBlack,
-      prg_back);
+    menu_cell_draw(ctx, cell_layer, buff, icon, progress, font, MENU_CELL_CENTERED, progress_fg_color,
+      progress_bg_color);
   }
 }
 
@@ -219,11 +227,9 @@ static MenuWindow *menu_window_init(MenuWindow *menu_window,
     // create menu layer
 #ifdef PBL_ROUND
     menu_window->menu = menu_layer_create(bounds);
-#elif PBL_SDK_3
+#else
     menu_window->menu = menu_layer_create(GRect(0, STATUS_BAR_LAYER_HEIGHT, bounds.size.w,
                                           bounds.size.h - STATUS_BAR_LAYER_HEIGHT));
-#else
-    menu_window->menu = menu_layer_create(bounds);
 #endif
 #ifdef PBL_ROUND
     menu_layer_set_center_focused(menu_window->menu, true);
@@ -242,8 +248,6 @@ static MenuWindow *menu_window_init(MenuWindow *menu_window,
     // create text layer
 #ifdef PBL_ROUND
     menu_window->text = text_layer_create(GRect(0, 129, bounds.size.w, 20));
-#elif PBL_SDK_3
-    menu_window->text = text_layer_create(GRect(0, 99, bounds.size.w, 20));
 #else
     menu_window->text = text_layer_create(GRect(0, 85, bounds.size.w, 20));
 #endif
@@ -253,11 +257,9 @@ static MenuWindow *menu_window_init(MenuWindow *menu_window,
     text_layer_set_background_color(menu_window->text, GColorClear);
     layer_add_child(root, text_layer_get_layer(menu_window->text));
     // create status bar
-#ifdef PBL_SDK_3
     menu_window->status = status_bar_layer_create();
     status_bar_layer_set_colors(menu_window->status, GColorClear, GColorBlack);
     layer_add_child(root, status_bar_layer_get_layer(menu_window->status));
-#endif
     // push window
     window_stack_push(menu_window->window, animated);
     return menu_window;
@@ -283,8 +285,7 @@ MenuWindow *menu_window_create(MenuWindowCallbacks menu_window_callbacks, bool a
   MenuWindow *menu_window = (MenuWindow*)malloc(sizeof(MenuWindow));
   if (menu_window) {
     menu_window_init(menu_window, menu_window_callbacks, animated);
-  }
-  else {
+  } else {
     // error handling
     APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to create MenuWindow");
     return NULL;
@@ -300,9 +301,7 @@ MenuWindow *menu_window_create(MenuWindowCallbacks menu_window_callbacks, bool a
 
 void menu_window_destroy(MenuWindow *menu_window) {
   if (menu_window != NULL) {
-#ifdef PBL_SDK_3
     status_bar_layer_destroy(menu_window->status);
-#endif
     text_layer_destroy(menu_window->text);
     menu_layer_destroy(menu_window->menu);
     window_destroy(menu_window->window);
@@ -356,7 +355,5 @@ void menu_window_reload_data(MenuWindow *menu_window) {
  */
 
 void menu_window_set_highlight_color(MenuWindow *menu_window, GColor color) {
-#ifdef PBL_COLOR
-  menu_layer_set_highlight_colors(menu_window->menu, color, GColorBlack);
-#endif
+  menu_layer_set_highlight_colors(menu_window->menu, color, gcolor_legible_over(color));
 }

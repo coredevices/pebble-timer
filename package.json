@@ -1,0 +1,125 @@
+{
+  "version": "1.2.0",
+  "author": "Pebble",
+  "private": true,
+  "dependencies": {},
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "sdkVersion": "3",
+    "resources": {
+      "media": [
+        {
+          "menuIcon": true,
+          "type": "pbi8",
+          "name": "IMAGE_ICON",
+          "file": "images/image_system_icon.png"
+        },
+        {
+          "type": "raw",
+          "name": "ICON_ALARM_CLOCK",
+          "file": "drawing/Pebble_80x80_Alarm_clock.pdc"
+        },
+        {
+          "type": "raw",
+          "name": "ICON_DELETED",
+          "file": "drawing/Pebble_80x80_Deleted.pdc"
+        },
+        {
+          "type": "font",
+          "characterRegex": "[0-9:]",
+          "name": "FONT_LECO_REGULAR_SUBSET_20",
+          "file": "fonts/leco_regular_mod.otf"
+        },
+        {
+          "type": "font",
+          "characterRegex": "[0-9:]",
+          "name": "FONT_LECO_REGULAR_SUBSET_26",
+          "file": "fonts/leco_regular_mod.otf"
+        },
+        {
+          "type": "font",
+          "characterRegex": "[0-9:]",
+          "name": "FONT_LECO_REGULAR_SUBSET_36",
+          "file": "fonts/leco_regular_mod.otf"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_DISMISS",
+          "file": "images/action_bar_icon_dismiss.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_EDIT",
+          "file": "images/action_bar_icon_edit.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_PAUSE",
+          "file": "images/action_bar_icon_pause.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_PLAY",
+          "file": "images/action_bar_icon_play.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_SNOOZE",
+          "file": "images/action_bar_icon_snooze.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_DELETE",
+          "file": "images/action_bar_icon_delete.png"
+        },
+        {
+          "type": "png-trans",
+          "name": "IMAGE_PAUSE_TRANS",
+          "file": "images/image_pause_bw.png"
+        },
+        {
+          "type": "png-trans",
+          "name": "IMAGE_PLAY_TRANS",
+          "file": "images/image_play_bw.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_ALARM",
+          "file": "images/image_alarm.png",
+          "targetPlatforms": ["aplite"]
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_SHREADER",
+          "file": "images/image_shreader.png",
+          "targetPlatforms": ["aplite"]
+        }
+      ]
+    },
+    "projectType": "native",
+    "uuid": "c64aae42-b822-4d6d-995b-bc7c38e843f4",
+    "messageKeys": {
+      "KEY_TOTAL_TIME": 15,
+      "KEY_UNIQUEID": 10,
+      "KEY_DURATION": 5
+    },
+    "enableMultiJS": false,
+    "displayName": "Timer",
+    "watchapp": {
+      "onlyShownOnCommunication": false,
+      "hiddenApp": false,
+      "watchface": false
+    },
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "capabilities": []
+  },
+  "name": "Timer"
+}

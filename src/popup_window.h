@@ -227,13 +227,6 @@ void popup_window_refresh(PopupWindow *popup_window);
 
 
 /*
- * PDC's are only currently supported on SDK 3.x, so two functions are needed
- * to set the content of the PopupWindow, one for Aplite and one for Basalt
- */
-
-#ifdef PBL_SDK_3
-
-/*
  * Function:    popup_window_set_pdc
  * ---------------------------------
  * sets the animating PDC displayed in the center of the screen
@@ -259,8 +252,6 @@ void popup_window_set_pdc(PopupWindow *popup_window, uint32_t resource_id, bool 
 
 int64_t popup_window_get_pdc_duration(PopupWindow *popup_window);
 
-#else
-
 /*
  * Function:    popup_window_set_image
  * -----------------------------------
@@ -272,10 +263,6 @@ int64_t popup_window_get_pdc_duration(PopupWindow *popup_window);
  */
 
 void popup_window_set_image(PopupWindow *popup_window, uint32_t resource_id);
-
-#endif
-
-
 
 /*
  * Function:    popup_window_set_title

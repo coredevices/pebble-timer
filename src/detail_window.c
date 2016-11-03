@@ -55,9 +55,7 @@ struct DetailWindow {
   GBitmap     *edit_icon, *play_icon, *pause_icon, *delete_icon;  //< icons
   GFont       large_font, medium_font, small_font; //< fonts
   GColor      highlight_color;        //< main color for highlights
-#ifdef PBL_SDK_3
   StatusBarLayer *status;             //< status bar for SDK 3
-#endif
   DetailWindowCallbacks callbacks;    //< callbacks for button presses
 
   char        main_buff[12];          //< text buffer for main_text
@@ -93,7 +91,7 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, bounds.size.w / 2,
     TRIG_MAX_ANGLE - TRIG_MAX_ANGLE * current_time / total_time, TRIG_MAX_ANGLE);
-#elif PBL_COLOR
+#else
   graphics_context_set_fill_color(ctx, detail_window->highlight_color);
   graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w,
     layer_get_bounds(layer).size.h - water_level), 1, GCornerNone);
@@ -164,35 +162,10 @@ static void click_config_provider(void *context) {
  * API FUNCTIONS
  */
 
-/*
- * create a new DetailWindow and return a pointer to it
- * this includes creating all its children layers but
- * does not push it onto the window stack
- */
-
-DetailWindow *detail_window_create(DetailWindowCallbacks detail_window_callbacks) {
-  DetailWindow *detail_window = (DetailWindow*)malloc(sizeof(DetailWindow));
-  // error handling
-  if (detail_window == NULL) {
-    // error handling
-    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to create DetailWindow");
-    return NULL;
-  }
-
-  // create window
-  detail_window->window = window_create();
-  // error handling
-  if (detail_window->window == NULL) {
-    free(detail_window);
-    // error handling
-    APP_LOG(APP_LOG_LEVEL_ERROR, "Failed to create window for DetailWindow");
-    return NULL;
-  }
-
-#ifdef PBL_COLOR
+static void prv_window_load(Window* window){
+  DetailWindow *detail_window = window_get_user_data(window);
   window_set_background_color(detail_window->window, GColorLightGray);
-#endif
-detail_window->callbacks = detail_window_callbacks;
+
   // load resources
   detail_window->edit_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EDIT);
   detail_window->play_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PLAY);
@@ -204,8 +177,6 @@ detail_window->callbacks = detail_window_callbacks;
     resource_get_handle(RESOURCE_ID_FONT_LECO_REGULAR_SUBSET_26));
   detail_window->small_font = fonts_load_custom_font(
     resource_get_handle(RESOURCE_ID_FONT_LECO_REGULAR_SUBSET_20));
-  // zero some values
-  detail_window->countdown_timer = NULL;
   // get window parameters
   Layer *root = window_get_root_layer(detail_window->window);
   GRect bounds = layer_get_frame(root);
@@ -221,12 +192,9 @@ detail_window->callbacks = detail_window_callbacks;
 #ifdef PBL_ROUND
   detail_window->main_text = text_layer_create(
     GRect(0, 65, bounds.size.w - ACTION_BAR_WIDTH, 36));
-#elif PBL_SDK_3
-  detail_window->main_text = text_layer_create(
-    GRect(0, 20, bounds.size.w - ACTION_BAR_WIDTH, 36));
 #else
   detail_window->main_text = text_layer_create(
-    GRect(0, 7, bounds.size.w - ACTION_BAR_WIDTH, 36));
+    GRect(0, 20, bounds.size.w - ACTION_BAR_WIDTH, 36));
 #endif
   text_layer_set_font(detail_window->main_text, detail_window->large_font);
   text_layer_set_text(detail_window->main_text, "00:00");
@@ -238,14 +206,10 @@ detail_window->callbacks = detail_window_callbacks;
   detail_window->sub_text = text_layer_create(
     GRect(0, 145, bounds.size.w, 20));
     text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentCenter);
-#elif PBL_SDK_3
+#else
   detail_window->sub_text = text_layer_create(
     GRect(10, 138, bounds.size.w - ACTION_BAR_WIDTH, 20));
     text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
-#else
-  detail_window->sub_text = text_layer_create(
-    GRect(10, 122, bounds.size.w - ACTION_BAR_WIDTH, 20));
-  text_layer_set_text_alignment(detail_window->sub_text, GTextAlignmentLeft);
 #endif
   text_layer_set_font(detail_window->sub_text, detail_window->small_font);
   text_layer_set_text(detail_window->sub_text, "00:00");
@@ -260,7 +224,6 @@ detail_window->callbacks = detail_window_callbacks;
   action_bar_layer_set_icon(detail_window->action, BUTTON_ID_SELECT, detail_window->pause_icon);
   action_bar_layer_set_icon(detail_window->action, BUTTON_ID_DOWN, detail_window->delete_icon);
   // create status bar
-#ifdef PBL_SDK_3
 #ifdef PBL_ROUND
   int16_t horiz_off = 0;
 #else
@@ -271,7 +234,42 @@ detail_window->callbacks = detail_window_callbacks;
     GRect(0, 0, bounds.size.w - horiz_off, STATUS_BAR_LAYER_HEIGHT));
   status_bar_layer_set_colors(detail_window->status, GColorClear, GColorBlack);
   layer_add_child(root, status_bar_layer_get_layer(detail_window->status));
-#endif
+}
+
+static void prv_window_unload(Window* window){
+  DetailWindow *detail_window = window_get_user_data(window);
+  status_bar_layer_destroy(detail_window->status);
+  action_bar_layer_destroy(detail_window->action);
+  text_layer_destroy(detail_window->sub_text);
+  text_layer_destroy(detail_window->main_text);
+  layer_destroy(detail_window->layer);
+  window_destroy(detail_window->window);
+  gbitmap_destroy(detail_window->edit_icon);
+  gbitmap_destroy(detail_window->play_icon);
+  gbitmap_destroy(detail_window->pause_icon);
+  gbitmap_destroy(detail_window->delete_icon);
+  fonts_unload_custom_font(detail_window->large_font);
+  fonts_unload_custom_font(detail_window->medium_font);
+  fonts_unload_custom_font(detail_window->small_font);
+  detail_window->window = NULL;
+}
+
+
+/*
+ * create a new DetailWindow and return a pointer to it
+ * this includes creating all its children layers but
+ * does not push it onto the window stack
+ */
+
+DetailWindow *detail_window_create(DetailWindowCallbacks detail_window_callbacks) {
+  DetailWindow *detail_window = (DetailWindow*)malloc(sizeof(DetailWindow));
+  // error handling
+  if (detail_window == NULL) {
+    return NULL;
+  }
+
+  *detail_window = (DetailWindow) { .callbacks = detail_window_callbacks };
+  
   return detail_window;
 }
 
@@ -283,27 +281,10 @@ detail_window->callbacks = detail_window_callbacks;
 
 void detail_window_destroy(DetailWindow *detail_window) {
   if (detail_window != NULL) {
-#ifdef PBL_SDK_3
-    status_bar_layer_destroy(detail_window->status);
-#endif
-    action_bar_layer_destroy(detail_window->action);
-    text_layer_destroy(detail_window->sub_text);
-    text_layer_destroy(detail_window->main_text);
-    layer_destroy(detail_window->layer);
-    window_destroy(detail_window->window);
-    gbitmap_destroy(detail_window->edit_icon);
-    gbitmap_destroy(detail_window->play_icon);
-    gbitmap_destroy(detail_window->pause_icon);
-    gbitmap_destroy(detail_window->delete_icon);
-    fonts_unload_custom_font(detail_window->large_font);
-    fonts_unload_custom_font(detail_window->medium_font);
-    fonts_unload_custom_font(detail_window->small_font);
     free(detail_window);
     detail_window = NULL;
     return;
   }
-  // error handling
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Attempted to free NULL DetailWindow");
 }
 
 
@@ -313,7 +294,18 @@ void detail_window_destroy(DetailWindow *detail_window) {
  */
 
 void detail_window_push(DetailWindow *detail_window, bool animated) {
-  window_stack_push(detail_window->window, animated);
+  if (detail_window->window == NULL) {
+    detail_window->window = window_create();
+    window_set_user_data(detail_window->window, detail_window);
+    window_set_window_handlers(detail_window->window,
+      (WindowHandlers){
+        .load = prv_window_load,
+        .unload = prv_window_unload
+      });
+  }
+  if (detail_window->window) {
+    window_stack_push(detail_window->window, animated);
+  }
 }
 
 
@@ -323,7 +315,9 @@ void detail_window_push(DetailWindow *detail_window, bool animated) {
  */
 
 void detail_window_pop(DetailWindow *detail_window, bool animated) {
-  window_stack_remove(detail_window->window, animated);
+  if (detail_window->window) {
+    window_stack_remove(detail_window->window, animated);
+  }
 }
 
 
@@ -354,6 +348,10 @@ void detail_window_set_countdown_timer(DetailWindow *detail_window,
  */
 
 void detail_window_refresh(DetailWindow *detail_window) {
+  if (detail_window->window == NULL) {
+    return;
+  }
+
   layer_mark_dirty(detail_window->layer);
   // main text
   countdown_timer_format_text(countdown_timer_get_current_time(detail_window->countdown_timer),
@@ -377,15 +375,13 @@ void detail_window_refresh(DetailWindow *detail_window) {
  */
 
 void detail_window_deep_refresh(DetailWindow *detail_window) {
-  if (detail_window->countdown_timer != NULL) {
+  if (detail_window->window != NULL && detail_window->countdown_timer != NULL) {
     action_bar_layer_set_icon(detail_window->action, BUTTON_ID_SELECT,
       countdown_timer_get_paused(detail_window->countdown_timer) ?
       detail_window->play_icon : detail_window->pause_icon);
     detail_window_refresh(detail_window);
     return;
   }
-  // error handling
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Tried to deep refresh DetailWindow with NULL countdown_timer");
 }
 
 

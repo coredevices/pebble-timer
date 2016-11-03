@@ -11,10 +11,8 @@
 #define DEFAULT_CELL_PADDING 10
 #define DEFAULT_SELECTED_INDEX 0
 #define DEFAULT_FONT FONT_KEY_GOTHIC_28_BOLD
-#ifdef PBL_COLOR
 #define DEFAULT_ACTIVE_COLOR GColorWhite
 #define DEFAULT_INACTIVE_COLOR GColorDarkGray
-#endif
 
 #define BUTTON_HOLD_REPEAT_MS 100
 
@@ -108,7 +106,6 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
     // The cell rectangle has been constructed
     GRect rect = GRect(current_x_offset, y_offset, width, height);
 
-#ifdef PBL_COLOR
     // Draw the cell as inactive by default
     GColor bg_color = data->inactive_background_color;
 
@@ -124,15 +121,6 @@ static void prv_draw_cell_backgrounds(Layer *layer, GContext *ctx) {
     graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
 #else
     graphics_fill_rect(ctx, rect, 1, GCornerNone);
-#endif
-#else
-    // draw a black, empty box
-    graphics_context_set_stroke_color(ctx, GColorBlack);
-    graphics_draw_rect(ctx, rect);
-    // position highlight
-    if (data->selected_cell_idx == i && !data->slide_amin_progress) {
-      layer_set_frame(inverter_layer_get_layer(data->inverter), rect);
-    }
 #endif
 
     // Update the x-offset so we are ready for the next cell
@@ -188,7 +176,6 @@ static void prv_draw_slider_slide(Layer *layer, GContext *ctx) {
 
   GRect rect = GRect(current_x_offset, 0, current_cell_width, layer_get_bounds(layer).size.h);
 
-#ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
 #ifdef PBL_ROUND
     rect.origin.y -= (rect.size.w - rect.size.h) / 2;
@@ -196,9 +183,6 @@ static void prv_draw_slider_slide(Layer *layer, GContext *ctx) {
     graphics_fill_rect(ctx, rect, rect.size.h / 2 - 1, GCornersAll);
 #else
     graphics_fill_rect(ctx, rect, 1, GCornerNone);
-#endif
-#else
-  layer_set_frame(inverter_layer_get_layer(data->inverter), rect);
 #endif
 }
 
@@ -231,7 +215,6 @@ static void prv_draw_slider_settle(Layer *layer, GContext *ctx) {
     x_offset -= current_width;
 
   GRect rect = GRect(x_offset, 0, current_width, layer_get_bounds(layer).size.h);
-#ifdef PBL_COLOR
   graphics_context_set_fill_color(ctx, data->active_background_color);
 #ifdef PBL_ROUND
     rect.origin.y -= (rect.size.w - rect.size.h) / 2;
@@ -240,23 +223,9 @@ static void prv_draw_slider_settle(Layer *layer, GContext *ctx) {
 #else
     graphics_fill_rect(ctx, rect, 1, GCornerNone);
 #endif
-#else
-  if (data->slide_is_forward) {
-    rect.origin.x -= data->cell_widths[data->selected_cell_idx];
-    rect.size.w += data->cell_widths[data->selected_cell_idx];
-  }
-  else
-    rect.size.w += data->cell_widths[data->selected_cell_idx];
-  layer_set_frame(inverter_layer_get_layer(data->inverter), rect);
-#endif
 }
 
 static void prv_draw_text(Layer *layer, GContext *ctx) {
-  // set text color
-#ifndef PBL_COLOR
-  graphics_context_set_text_color(ctx, GColorBlack);
-#endif
-
   SelectionLayerData *data = layer_get_data(layer);
   // Loop over each cell and draw the text
   for (unsigned i = 0, current_x_offset = 0; i < data->num_cells; i++) {
@@ -293,6 +262,14 @@ static void prv_draw_text(Layer *layer, GContext *ctx) {
           y_offset += delta;
         }
 
+        // If the slide animation is in progress, then don't set the background color. The slide
+        // will be drawn over top of this later
+        if (data->selected_cell_idx == i && !data->slide_amin_progress) {
+          graphics_context_set_text_color(ctx, gcolor_legible_over(data->active_background_color));
+        } else {
+          graphics_context_set_text_color(ctx, gcolor_legible_over(data->inactive_background_color));
+        }
+
         GRect rect = GRect(current_x_offset, y_offset, data->cell_widths[i], height);
         graphics_draw_text(ctx, text, data->font,
             rect, GTextOverflowModeFill, GTextAlignmentCenter, NULL);
@@ -308,11 +285,6 @@ static void prv_draw_selection_layer(Layer *layer, GContext *ctx) {
   // The first thing that is drawn is the background for each cell
   prv_draw_cell_backgrounds(layer, ctx);
 
-#ifndef PBL_COLOR // aplite
-  // draw text under inverter layer
-  prv_draw_text(layer, ctx);
-#endif
-
   // If the slider is in motion draw it. This is above the backgrounds, but below the text
   if (data->slide_amin_progress) {
     prv_draw_slider_slide(layer, ctx);
@@ -321,16 +293,8 @@ static void prv_draw_selection_layer(Layer *layer, GContext *ctx) {
     prv_draw_slider_settle(layer, ctx);
   }
 
-//   // draw selection on aplite where all backgrounds are the same.
-// #ifndef PBL_COLOR
-//   if (!data->slide_amin_progress && !data->slide_settle_anim_progress)
-//     prv_draw_slider_settle(layer, ctx);
-// #endif
-
-#ifdef PBL_COLOR // basalt
   // Finally the text is drawn over everything
   prv_draw_text(layer, ctx);
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,10 +339,8 @@ static void prv_bump_text_stopped(Animation *animation, bool finished, void *con
   animation_destroy(animation);
 
   // schedule next animation
-#ifndef PBL_SDK_3
   Animation *bump_settle = prv_create_bump_settle_animation(layer);
   animation_schedule(bump_settle);
-#endif
 }
 
 static void prv_bump_settle_impl(struct Animation *animation,
@@ -443,14 +405,10 @@ static Animation* prv_create_bump_settle_animation(Layer *layer) {
 static void prv_run_value_change_animation(Layer *layer) {
   SelectionLayerData *data = layer_get_data(layer);
   Animation *bump_text = prv_create_bump_text_animation(layer);
-#ifdef PBL_SDK_3
   Animation *bump_settle = prv_create_bump_settle_animation(layer);
   data->value_change_animation =
       animation_sequence_create(bump_text, bump_settle, NULL);
   animation_schedule(data->value_change_animation);
-#else
-  animation_schedule(bump_text);
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -488,12 +446,6 @@ static void prv_slide_stopped(Animation *animation, bool finished, void *context
     data->selected_cell_idx--;
   // destroy
   animation_destroy(animation);
-
-  // start next animation
-#ifndef PBL_SDK_3
-  Animation *settle_animation = prv_create_slide_settle_animation(layer);
-  animation_schedule(settle_animation);
-#endif
 }
 
 static void prv_slide_settle_impl(struct Animation *animation,
@@ -561,14 +513,10 @@ static Animation* prv_create_slide_settle_animation(Layer *layer) {
 static void prv_run_slide_animation(Layer *layer) {
   SelectionLayerData *data = layer_get_data(layer);
   Animation *over_animation = prv_create_slide_animation(layer);
-#ifdef PBL_SDK_3
   Animation *settle_animation = prv_create_slide_settle_animation(layer);
   data->next_cell_animation =
       animation_sequence_create(over_animation, settle_animation, NULL);
   animation_schedule(data->next_cell_animation);
-#else
-  animation_schedule(over_animation);
-#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -658,18 +606,13 @@ static void prv_click_config_provider(Layer *layer) {
 Layer* selection_layer_init(SelectionLayerData *selection_layer_, GRect frame, unsigned num_cells) {
   if (num_cells > MAX_SELECTION_LAYER_CELLS) {
     num_cells = MAX_SELECTION_LAYER_CELLS;
-    APP_LOG(APP_LOG_LEVEL_INFO, "Too many cells, reduced to MAX_SELECTION_LAYER_CELLS");
   }
   Layer *layer = layer_create_with_data(frame, sizeof(SelectionLayerData));
   SelectionLayerData *selection_layer_data = layer_get_data(layer);
   // Set layer defaults
   *selection_layer_data = (SelectionLayerData) {
-#ifdef PBL_COLOR
     .active_background_color = DEFAULT_ACTIVE_COLOR,
     .inactive_background_color = DEFAULT_INACTIVE_COLOR,
-#else
-    .inverter = inverter_layer_create(GRect(0, 0, 0, frame.size.h)),
-#endif
     .num_cells = num_cells,
     .cell_padding = DEFAULT_CELL_PADDING,
     .selected_cell_idx = DEFAULT_SELECTED_INDEX,
@@ -683,11 +626,6 @@ Layer* selection_layer_init(SelectionLayerData *selection_layer_, GRect frame, u
   layer_set_clips(layer, false);
   layer_set_update_proc(layer, (LayerUpdateProc)prv_draw_selection_layer);
 
-  // add inverter layer
-#ifndef PBL_COLOR
-  layer_add_child(layer, inverter_layer_get_layer(selection_layer_data->inverter));
-#endif
-
   return layer;
 }
 
@@ -699,12 +637,6 @@ Layer* selection_layer_create(GRect frame, unsigned num_cells) {
 
 void selection_layer_deinit(Layer* layer) {
   SelectionLayerData *data = layer_get_data(layer);
-
-  // remove inverter layer
-#ifndef PBL_COLOR
-  inverter_layer_destroy(data->inverter);
-#endif
-
   layer_destroy(layer);
 }
 
@@ -721,10 +653,6 @@ void selection_layer_set_cell_width(Layer *layer, unsigned idx, unsigned width) 
   if (data && idx < data->num_cells) {
     data->cell_widths[idx] = width;
   }
-#ifndef PBL_COLOR
-  layer_set_bounds(inverter_layer_get_layer(data->inverter),
-    GRect(0, 0, width, layer_get_bounds(inverter_layer_get_layer(data->inverter)).size.h));
-#endif
 }
 
 void selection_layer_set_font(Layer *layer, GFont font) {

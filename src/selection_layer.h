@@ -29,9 +29,6 @@ typedef struct SelectionLayerCallbacks {
 
 
 typedef struct SelectionLayerData {
-#ifndef PBL_COLOR
-  InverterLayer *inverter;
-#endif
   unsigned num_cells;
   unsigned cell_widths[MAX_SELECTION_LAYER_CELLS];
   unsigned cell_padding;

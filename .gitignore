@@ -3,3 +3,5 @@ build
 .lock-waf*
 .DS_Store
 CMakeLists.txt
+
+node_modules/
