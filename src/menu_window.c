@@ -81,7 +81,10 @@ static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *cont
 static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index,
                                            void *context) {
   MenuWindow *menu_window = (MenuWindow*)context;
-  return menu_window->callbacks.get_timer_count(context) + 1;
+  const uint8_t timer_count = menu_window->callbacks.get_timer_count(context);
+  // rows: [0] "+" add, [1..timer_count] timers, [timer_count+1] sort toggle
+  // Hide the sort row unless there are at least two timers to reorder.
+  return (timer_count < 2) ? timer_count + 1 : timer_count + 2;
 }
 
 
@@ -164,10 +167,18 @@ static void menu_draw_row_callback(GContext* ctx, const Layer *cell_layer, MenuI
                                    void *context) {
   // get properties
   MenuWindow *menu_window = (MenuWindow *) context;
+  const uint8_t timer_count = menu_window->callbacks.get_timer_count(context);
   // draw contents, with "+" in first cell
   if (cell_index->row == 0) {
     menu_cell_draw(ctx, cell_layer, "+", NULL, 0, fonts_get_system_font(FONT_KEY_GOTHIC_28),
       true, GColorBlack, GColorWhite);
+  } else if (cell_index->row == timer_count + 1) {
+    const uint8_t sort_mode = menu_window->callbacks.get_sort_mode ?
+                              menu_window->callbacks.get_sort_mode(context) : 0;
+    const char *title = sort_mode ? "Sort: Duration" : "Sort: Created";
+    menu_cell_draw(ctx, cell_layer, (char*)title, NULL, 0,
+                   fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+                   true, GColorBlack, GColorWhite);
   } else {
     CountdownTimer *countdown_timer = menu_window->callbacks.get_timer(cell_index->row - 1,
                                                                        context);

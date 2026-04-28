@@ -48,6 +48,18 @@ typedef CountdownTimer* (*MenuWindowGetTimer)(uint8_t index, void *context);
 
 typedef uint8_t (*MenuWindowGetTimerCount)(void *context);
 
+/*
+ * Callback:    MenuWindowGetSortMode
+ * ----------------------------------
+ * gets the current timer sorting mode for the menu list
+ *
+ * returns:
+ *   0 = created at (added order)
+ *   1 = duration (shortest to longest)
+ */
+
+typedef uint8_t (*MenuWindowGetSortMode)(void *context);
+
 
 
 /*
@@ -69,6 +81,7 @@ typedef void (*MenuWindowClickCallback)(uint8_t index, void *context);
 typedef struct MenuWindowCallbacks {
   MenuWindowGetTimer get_timer;
   MenuWindowGetTimerCount get_timer_count;
+  MenuWindowGetSortMode get_sort_mode;
   MenuWindowClickCallback clicked;
 } MenuWindowCallbacks;
 

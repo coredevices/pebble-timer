@@ -26,6 +26,7 @@
 #define COUNTDOWN_TIMER_SNOOZE_DELAY 60000 // milliseconds
 #define TIMER_MIN_LENGTH 5000 // milliseconds
 #define TIMELINE_MIN_LENGTH 900000 // milliseconds
+#define TIMER_SORT_MODE_PERSIST_KEY 9938472
 #define INACTIVITY_THRESHOLD 900000 // length of time before refresh throttling in milliseconds
 #define INACTIVE_REFRESH_DELAY 1000 // ms between frames after throttling
 #define PIN_ACTION_CODE_TRUNCATION_LEVEL 100 // both the pin id and action code have to be stored
@@ -43,9 +44,35 @@ static SettingWindow *s_setting_window = NULL;
 static PopupWindow *s_popup_window = NULL;
 static uint8_t s_countdown_timers_count = 0;
 static CountdownTimer *s_countdown_timers[COUNTDOWN_TIMERS_MAX] = {};
+static uint8_t s_timer_view_indices[COUNTDOWN_TIMERS_MAX] = {};
+static uint8_t s_timer_sort_mode = 0; // 0=created at, 1=duration
 static int32_t s_countdown_timer_id_max = 0;
 static AppTimer *s_app_timer = NULL;
 static int64_t s_last_activity = 0;
+
+static void rebuild_timer_view_indices(void) {
+  for (uint8_t i = 0; i < s_countdown_timers_count; i++) {
+    s_timer_view_indices[i] = i;
+  }
+
+  if (s_timer_sort_mode == 0) {
+    return;
+  }
+
+  // Stable sort by duration (shortest -> longest), using created order as tiebreaker.
+  for (uint8_t i = 0; i < s_countdown_timers_count; i++) {
+    for (uint8_t j = 0; j + 1 < s_countdown_timers_count - i; j++) {
+      const uint8_t a_i = s_timer_view_indices[j];
+      const uint8_t b_i = s_timer_view_indices[j + 1];
+      const int64_t a = countdown_timer_get_duration(s_countdown_timers[a_i]);
+      const int64_t b = countdown_timer_get_duration(s_countdown_timers[b_i]);
+      if (a > b) {
+        s_timer_view_indices[j] = b_i;
+        s_timer_view_indices[j + 1] = a_i;
+      }
+    }
+  }
+}
 
 
 
@@ -182,6 +209,7 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
       &s_countdown_timers_count, countdown_timer);
     countdown_timer_start(countdown_timer);
     // update visuals
+    rebuild_timer_view_indices();
     menu_window_reload_data(s_menu_window);
     menu_window_refresh(s_menu_window);
     detail_window_set_countdown_timer(s_detail_window, countdown_timer);
@@ -196,6 +224,7 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
   } else {
     countdown_timer_update(countdown_timer, duration, true);
     countdown_timer_start(countdown_timer);
+    rebuild_timer_view_indices();
     detail_window_deep_refresh(s_detail_window);
     setting_window_pop(setting_window, true);
     // deal with timeline
@@ -279,6 +308,7 @@ static void detail_window_delete_timer_callback(CountdownTimer *countdown_timer,
     s_countdown_timers_count, countdown_timer);
   countdown_timer_destroy(countdown_timer);
   countdown_timer_list_remove(s_countdown_timers, &s_countdown_timers_count, timer_index);
+  rebuild_timer_view_indices();
   // reload MenuWindow data (no idea why, but this must be called twice or when the last timer
   // is deleted, the "+" cell is stuck at the short cell height)
   menu_window_reload_data(s_menu_window);
@@ -321,7 +351,7 @@ static void detail_window_delete_timer_callback(CountdownTimer *countdown_timer,
 
 static CountdownTimer *menu_window_get_timer_callback(uint8_t index, void *context) {
   if (index < s_countdown_timers_count) {
-    return s_countdown_timers[index];
+    return s_countdown_timers[s_timer_view_indices[index]];
   }
   // error handling
   APP_LOG(APP_LOG_LEVEL_ERROR, "Attempted to access timer outside array bounds");
@@ -339,6 +369,10 @@ static uint8_t menu_window_get_timer_count_callback(void *context) {
   return s_countdown_timers_count;
 }
 
+static uint8_t menu_window_get_sort_mode_callback(void *context) {
+  return s_timer_sort_mode;
+}
+
 
 
 /*
@@ -350,9 +384,21 @@ static void menu_window_click_callback(uint8_t index, void *context) {
   if (index == 0) {
     setting_window_set_timer(s_setting_window, NULL);
     setting_window_push(s_setting_window, true);
+  } else if (index == s_countdown_timers_count + 1) {
+    // toggle sort mode (created at <-> duration)
+    s_timer_sort_mode = !s_timer_sort_mode;
+    persist_write_int(TIMER_SORT_MODE_PERSIST_KEY, s_timer_sort_mode);
+    rebuild_timer_view_indices();
+    menu_window_reload_data(s_menu_window);
+    menu_window_refresh(s_menu_window);
   } else {
     // show timer in detail window
-    detail_window_set_countdown_timer(s_detail_window, s_countdown_timers[index - 1]);
+    const uint8_t view_index = index - 1;
+    if (view_index >= s_countdown_timers_count) {
+      return;
+    }
+    detail_window_set_countdown_timer(s_detail_window,
+      s_countdown_timers[s_timer_view_indices[view_index]]);
     detail_window_push(s_detail_window, true);
     detail_window_deep_refresh(s_detail_window);
     // start timer refreshing quickly
@@ -386,13 +432,19 @@ static void initialize(void) {
   if (persist_exists(COUNTDOWN_TIMER_ID_PERSIST_KEY)) {
     s_countdown_timer_id_max = persist_read_int(COUNTDOWN_TIMER_ID_PERSIST_KEY);
   }
+  if (persist_exists(TIMER_SORT_MODE_PERSIST_KEY)) {
+    s_timer_sort_mode = persist_read_int(TIMER_SORT_MODE_PERSIST_KEY) ? 1 : 0;
+  }
   // cancel wakeup
   wakeup_cancel_all();
+
+  rebuild_timer_view_indices();
 
   // create menu window
   MenuWindowCallbacks menu_callbacks = {
     .get_timer = menu_window_get_timer_callback,
     .get_timer_count = menu_window_get_timer_count_callback,
+    .get_sort_mode = menu_window_get_sort_mode_callback,
     .clicked = menu_window_click_callback,
   };
   s_menu_window = menu_window_create(menu_callbacks, true);
