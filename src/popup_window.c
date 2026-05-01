@@ -147,14 +147,20 @@ static void layers_center_in_window(PopupWindow *popup_window) {
   GSize gfx_size = gbitmap_get_bounds(popup_window->image).size;
 #endif
 
-  // vertically center the combined block of graphic + gap + text so they
-  // never overlap regardless of screen height
+  // keep the graphic vertically centered (its animations are authored to fit
+  // around this position) and place the text directly below it, clamped so it
+  // stays on screen on both short and tall displays
   const int16_t gap = 5;
-  int16_t total_h = gfx_size.h + gap + text_frame.size.h;
-  int16_t top = (window_frame.size.h - total_h) / 2;
-  if (top < 0) top = 0;
+  int16_t gfx_y = (window_frame.size.h - gfx_size.h) / 2;
+#ifdef PBL_PLATFORM_APLITE
+  gfx_y -= 7;  // preserve original aplite vertical offset
+#endif
+  int16_t text_y = gfx_y + gfx_size.h + gap;
+  if (text_y + text_frame.size.h > window_frame.size.h) {
+    text_y = window_frame.size.h - text_frame.size.h;
+  }
 
-  GRect layer_frame = GRect(0, top, gfx_size.w, gfx_size.h);
+  GRect layer_frame = GRect(0, gfx_y, gfx_size.w, gfx_size.h);
   if (popup_window->action_visible) {
     layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - gfx_size.w / 2;
   } else {
@@ -162,9 +168,8 @@ static void layers_center_in_window(PopupWindow *popup_window) {
   }
   layer_set_frame(popup_window->layer, layer_frame);
 
-  // position the text layer just below the graphic
   text_frame.origin.x = 0;
-  text_frame.origin.y = layer_frame.origin.y + gfx_size.h + gap;
+  text_frame.origin.y = text_y;
   text_frame.size.w = window_frame.size.w -
     ((popup_window->action_visible) ? horiz_off : 0);
   layer_set_frame(text_layer_get_layer(popup_window->text), text_frame);
