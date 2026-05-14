@@ -144,6 +144,27 @@ static void popup_window_snooze_timer_callback(CountdownTimer *countdown_timer, 
 
 
 /*
+ * PopupWindow replay timer callback
+ * restarts the timer with its original duration
+ */
+
+static void popup_window_replay_timer_callback(CountdownTimer *countdown_timer, void *context) {
+  countdown_timer_update(countdown_timer, countdown_timer_get_duration(countdown_timer), false);
+  countdown_timer_start(countdown_timer);
+  popup_window_pop(s_popup_window, true);
+  // show detail if not on top
+  if (!detail_window_get_topmost_window(s_detail_window)) {
+    detail_window_set_countdown_timer(s_detail_window, countdown_timer);
+    detail_window_push(s_detail_window, false);
+  }
+  detail_window_deep_refresh(s_detail_window);
+  // log activity
+  s_last_activity = countdown_timer_get_epoch_ms();
+}
+
+
+
+/*
  * PopupWindow stop timer callback
  * cancels the current timer vibration sequence
  */
@@ -418,6 +439,7 @@ static void initialize(void) {
   // create pop-up window
   PopupWindowCallbacks popup_callbacks = {
     .up_click = popup_window_snooze_timer_callback,
+    .select_click = popup_window_replay_timer_callback,
     .down_click = popup_window_stop_timer_callback,
   };
   s_popup_window = popup_window_create();

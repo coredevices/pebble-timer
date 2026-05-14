@@ -12,7 +12,7 @@
       "media": [
         {
           "menuIcon": true,
-          "type": "pbi8",
+          "type": "bitmap",
           "name": "IMAGE_ICON",
           "file": "images/image_system_icon.png"
         },
@@ -74,6 +74,11 @@
           "type": "bitmap",
           "name": "IMAGE_SNOOZE",
           "file": "images/action_bar_icon_snooze.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_REPLAY",
+          "file": "images/action_bar_icon_replay.png"
         },
         {
           "type": "bitmap",

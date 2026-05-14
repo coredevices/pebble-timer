@@ -73,7 +73,7 @@ struct PopupWindow {
   TextLayer       *text;          //< displays title text
   ActionBarLayer  *action;        //< optional action bar for dialogs
   PopupWindowCallbacks    callbacks;     //< callbacks for optional ActionBar
-  GBitmap *snooze_icon,   *stop_icon;    //< icons for ActionBar
+  GBitmap *snooze_icon, *stop_icon, *replay_icon;  //< icons for ActionBar
 
 #ifndef PBL_PLATFORM_APLITE
   GDrawCommandSequence    *draw_sequence;     //< draw command sequence
@@ -220,7 +220,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 /*
  * SELECT click handler callback
  *
- * nothing yet... here for completeness
+ * replays the completed timer with its original duration
  */
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -228,7 +228,7 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   if (popup_window->callbacks.select_click == NULL) {
     return;
   }
-  return popup_window->callbacks.select_click(context);
+  return popup_window->callbacks.select_click(popup_window->countdown_timer, context);
 }
 
 
@@ -267,6 +267,7 @@ static void prv_window_load(Window* window){
   // get window parameters
   popup_window->stop_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DISMISS);
   popup_window->snooze_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_SNOOZE);
+  popup_window->replay_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_REPLAY);
 
   // get window parameters
   Layer *root = window_get_root_layer(popup_window->window);
@@ -293,6 +294,7 @@ static void prv_window_load(Window* window){
   action_bar_layer_set_context(popup_window->action, popup_window);
   action_bar_layer_set_click_config_provider(popup_window->action, click_config_provider);
   action_bar_layer_set_icon(popup_window->action, BUTTON_ID_UP, popup_window->snooze_icon);
+  action_bar_layer_set_icon(popup_window->action, BUTTON_ID_SELECT, popup_window->replay_icon);
   action_bar_layer_set_icon(popup_window->action, BUTTON_ID_DOWN, popup_window->stop_icon);
 
   if (popup_window->action_visible) {
@@ -313,6 +315,7 @@ static void prv_window_unload(Window* window){
   window_destroy(popup_window->window);
   gbitmap_destroy(popup_window->snooze_icon);
   gbitmap_destroy(popup_window->stop_icon);
+  gbitmap_destroy(popup_window->replay_icon);
 #ifndef PBL_PLATFORM_APLITE
   if (popup_window->draw_sequence != NULL) {
     gdraw_command_sequence_destroy(popup_window->draw_sequence);
