@@ -12,7 +12,7 @@
       "media": [
         {
           "menuIcon": true,
-          "type": "bitmap",
+          "type": "pbi8",
           "name": "IMAGE_ICON",
           "file": "images/image_system_icon.png"
         },
