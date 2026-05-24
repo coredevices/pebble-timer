@@ -28,6 +28,10 @@
 #define TIMELINE_MIN_LENGTH 900000 // milliseconds
 #define INACTIVITY_THRESHOLD 900000 // length of time before refresh throttling in milliseconds
 #define INACTIVE_REFRESH_DELAY 1000 // ms between frames after throttling
+#define REFRESH_DELAY 1000 // ms between periodic redraws
+#define POPUP_REFRESH_DELAY 35 // ms between popup animation frames
+#define REFRESH_ALIGNMENT_DELAY 5 // ms after a second boundary to refresh
+#define MIN_REFRESH_DELAY 25 // minimum delay when correcting near a boundary
 #define PIN_ACTION_CODE_TRUNCATION_LEVEL 100 // both the pin id and action code have to be stored
                                              // in the pins action code
 #define PIN_LAUNCH_ARGS_OPEN 10 // when opened from pin, action code to open timer in detail view
@@ -46,6 +50,33 @@ static CountdownTimer *s_countdown_timers[COUNTDOWN_TIMERS_MAX] = {};
 static int32_t s_countdown_timer_id_max = 0;
 static AppTimer *s_app_timer = NULL;
 static int64_t s_last_activity = 0;
+
+static uint16_t prv_get_next_refresh_delay(void) {
+  if (popup_window_get_topmost_window(s_popup_window)) {
+    return POPUP_REFRESH_DELAY;
+  }
+
+  CountdownTimer *next_timer = countdown_timer_list_get_closest_timer(s_countdown_timers,
+    s_countdown_timers_count);
+  if (next_timer == NULL) {
+    return REFRESH_DELAY;
+  }
+
+  int64_t remaining = countdown_timer_get_current_time(next_timer);
+  if (remaining <= 0) {
+    return MIN_REFRESH_DELAY;
+  }
+
+  int64_t delay = remaining % REFRESH_DELAY;
+  if (delay == 0) {
+    delay = REFRESH_DELAY;
+  }
+  delay += REFRESH_ALIGNMENT_DELAY;
+  if (delay < MIN_REFRESH_DELAY) {
+    delay = MIN_REFRESH_DELAY;
+  }
+  return (uint16_t)delay;
+}
 
 
 
@@ -99,15 +130,8 @@ static void app_timer_callback(void *data) {
   int64_t inactivity_duration = countdown_timer_get_epoch_ms() - s_last_activity;
 
   // schedule next refresh
-  uint16_t refresh_rate = 35;
-  if (detail_top && !detail_window_get_update_needed(s_detail_window)) {
-    refresh_rate = 1000;
-  }
-  else if (menu_top) {
-    refresh_rate = 1000;
-  }
-  else if (popup_top) {
-    refresh_rate = 20;
+  uint16_t refresh_rate = prv_get_next_refresh_delay();
+  if (popup_top) {
     inactivity_duration = 0;
   }
   if (refresh_rate == 0) {
@@ -170,7 +194,7 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
   if (duration < TIMER_MIN_LENGTH) {
     setting_window_pop(setting_window, true);
     if (s_app_timer != NULL) {
-      app_timer_reschedule(s_app_timer, 10);
+      app_timer_reschedule(s_app_timer, MIN_REFRESH_DELAY);
     }
     return;
   }
@@ -208,7 +232,7 @@ static void setting_window_complete_callback(int64_t duration, void *context) {
 
   // refresh now
   if (s_app_timer != NULL) {
-    app_timer_reschedule(s_app_timer, 10);
+    app_timer_reschedule(s_app_timer, MIN_REFRESH_DELAY);
   }
 
   // log activity
@@ -239,6 +263,9 @@ static void detail_window_edit_timer_callback(CountdownTimer *countdown_timer, v
 
 static void detail_window_playpause_timer_callback(CountdownTimer *countdown_timer, void *context) {
   if (countdown_timer_get_paused(countdown_timer)) {
+    if (countdown_timer_get_current_time(countdown_timer) <= 0) {
+      countdown_timer_update(countdown_timer, countdown_timer_get_duration(countdown_timer), false);
+    }
     // push the Timeline pin
     if (countdown_timer_get_duration(countdown_timer) >= TIMELINE_MIN_LENGTH) {
       phone_send_pin(countdown_timer);
@@ -303,9 +330,9 @@ static void detail_window_delete_timer_callback(CountdownTimer *countdown_timer,
 
   // refresh immediately
   if (s_app_timer) {
-    app_timer_reschedule(s_app_timer, 10);
+    app_timer_reschedule(s_app_timer, POPUP_REFRESH_DELAY);
   } else {
-    s_app_timer = app_timer_register(10, app_timer_callback, NULL);
+    s_app_timer = app_timer_register(POPUP_REFRESH_DELAY, app_timer_callback, NULL);
   }
 
   // log activity
@@ -355,9 +382,8 @@ static void menu_window_click_callback(uint8_t index, void *context) {
     detail_window_set_countdown_timer(s_detail_window, s_countdown_timers[index - 1]);
     detail_window_push(s_detail_window, true);
     detail_window_deep_refresh(s_detail_window);
-    // start timer refreshing quickly
     if (s_app_timer != NULL) {
-      app_timer_reschedule(s_app_timer, 10);
+      app_timer_reschedule(s_app_timer, MIN_REFRESH_DELAY);
     }
   }
 
@@ -445,8 +471,7 @@ static void initialize(void) {
   }
 
   // start the main update timer
-  // update it really fast the first time so everything looks right
-  s_app_timer = app_timer_register(5, app_timer_callback, NULL);
+  s_app_timer = app_timer_register(prv_get_next_refresh_delay(), app_timer_callback, NULL);
 
   // log activity
   s_last_activity = countdown_timer_get_epoch_ms();

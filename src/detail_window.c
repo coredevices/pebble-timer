@@ -35,6 +35,7 @@
 #include "countdown_timer.h"
 
 #define TEXT_LAYER_MAX_LARGE_CHARACTERS 5
+#define MSEC_IN_SEC 1000
 
 
 
@@ -82,6 +83,9 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   DetailWindow *detail_window = (*(DetailWindow**)layer_get_data(layer));
   int64_t current_time = countdown_timer_get_current_time(detail_window->countdown_timer);
   int64_t total_time = countdown_timer_get_duration(detail_window->countdown_timer);
+  if (total_time <= 0) {
+    return;
+  }
   int16_t water_level = layer_get_bounds(layer).size.h - layer_get_bounds(layer).size.h *
     current_time / total_time;
 
@@ -96,6 +100,10 @@ static void layer_update_proc(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, GRect(0, water_level, layer_get_bounds(layer).size.w,
     layer_get_bounds(layer).size.h - water_level), 1, GCornerNone);
 #endif
+}
+
+static int64_t prv_round_up_to_next_second(int64_t value) {
+  return value > 0 ? value + MSEC_IN_SEC - 1 : 0;
 }
 
 
@@ -365,7 +373,8 @@ void detail_window_refresh(DetailWindow *detail_window) {
 
   layer_mark_dirty(detail_window->layer);
   // main text
-  countdown_timer_format_text(countdown_timer_get_current_time(detail_window->countdown_timer),
+  countdown_timer_format_text(
+    prv_round_up_to_next_second(countdown_timer_get_current_time(detail_window->countdown_timer)),
     detail_window->main_buff, sizeof(detail_window->main_buff));
   text_layer_set_text(detail_window->main_text, detail_window->main_buff);
   if (strlen(detail_window->main_buff) > TEXT_LAYER_MAX_LARGE_CHARACTERS) {

@@ -61,6 +61,7 @@
 #include <pebble.h>
 #include "countdown_timer.h"
 
+#define COUNTDOWN_TIMER_EXPIRED ((int64_t)-9223372036854775807LL - 1)
 #define MSEC_IN_SEC 1000
 #define MSEC_IN_MIN 60000
 #define MSEC_IN_HR 3600000
@@ -136,7 +137,11 @@ void countdown_timer_destroy(CountdownTimer *countdown_timer) {
 
 void countdown_timer_start(CountdownTimer *countdown_timer) {
   if (countdown_timer->paused) {
-    countdown_timer->start_ms += countdown_timer_get_epoch_ms();
+    if (countdown_timer->start_ms == COUNTDOWN_TIMER_EXPIRED) {
+      return;
+    }
+    int64_t now = countdown_timer_get_epoch_ms();
+    countdown_timer->start_ms += now;
     countdown_timer->paused = false;
     countdown_timer->last_update = time(NULL);
   }
@@ -172,12 +177,17 @@ void countdown_timer_stop(CountdownTimer *countdown_timer, int32_t *current_id_m
 
 void countdown_timer_update(CountdownTimer *countdown_timer, int64_t duration,
     bool update_duration) {
+  bool expired = countdown_timer->start_ms == COUNTDOWN_TIMER_EXPIRED;
   if (countdown_timer->duration_ms < duration || update_duration) {
     countdown_timer->duration_ms = duration;
   }
   int64_t now = countdown_timer_get_epoch_ms();
-  countdown_timer->start_ms =  ((countdown_timer->paused) ? 0 : now)
-    + duration - countdown_timer->duration_ms;
+  if (countdown_timer->paused && expired) {
+    countdown_timer->start_ms = 0;
+  } else {
+    countdown_timer->start_ms = ((countdown_timer->paused) ? 0 : now)
+      + duration - countdown_timer->duration_ms;
+  }
   countdown_timer->last_update = time(NULL);
 }
 
@@ -200,7 +210,7 @@ CountdownTimer *countdown_timer_check_ended(CountdownTimer **timer_array,
     // check if expired and not paused
     if (!timer_array[ii]->paused &&
         timer_array[ii]->start_ms + timer_array[ii]->duration_ms <= now) {
-      timer_array[ii]->start_ms = 0;
+      timer_array[ii]->start_ms = COUNTDOWN_TIMER_EXPIRED;
       timer_array[ii]->paused = true;
       if (return_timer == NULL) {
         return_timer = timer_array[ii];
@@ -429,12 +439,20 @@ int64_t countdown_timer_get_start(CountdownTimer *countdown_timer) {
  */
 
 int64_t countdown_timer_get_current_time(CountdownTimer *countdown_timer) {
-  int64_t current_time = countdown_timer_get_epoch_ms();
-  if (countdown_timer->start_ms != 0) {
-    current_time = countdown_timer->duration_ms -
-      (current_time - ((countdown_timer->start_ms + current_time - 1) % current_time));
+  if (countdown_timer->start_ms == COUNTDOWN_TIMER_EXPIRED) {
+    return 0;
   }
-  else {
+
+  int64_t current_time = countdown_timer->duration_ms;
+  if (countdown_timer->paused) {
+    current_time += countdown_timer->start_ms;
+  } else {
+    current_time -= countdown_timer_get_epoch_ms() - countdown_timer->start_ms;
+  }
+
+  if (current_time < 0) {
+    current_time = 0;
+  } else if (current_time > countdown_timer->duration_ms) {
     current_time = countdown_timer->duration_ms;
   }
   return current_time;
