@@ -526,8 +526,9 @@ void countdown_timer_format_text(int64_t value, char *buff, uint8_t size) {
  */
 
 char *countdown_timer_format_own_buff(CountdownTimer *countdown_timer) {
-  countdown_timer_format_text(countdown_timer_get_current_time(countdown_timer),
-    countdown_timer->buff, sizeof(countdown_timer->buff));
+  int64_t value = countdown_timer->start_ms == COUNTDOWN_TIMER_EXPIRED ?
+    countdown_timer->duration_ms : countdown_timer_get_current_time(countdown_timer);
+  countdown_timer_format_text(value, countdown_timer->buff, sizeof(countdown_timer->buff));
   return countdown_timer->buff;
 }
 
