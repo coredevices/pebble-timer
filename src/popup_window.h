@@ -69,7 +69,7 @@ typedef void (*PopupWindowUpClick)(CountdownTimer *countdown_timer, void *contex
  * called when the SELECT button is pressed
  */
 
-typedef void (*PopupWindowSelectClick)(void *context);
+typedef void (*PopupWindowSelectClick)(CountdownTimer *countdown_timer, void *context);
 
 
 
