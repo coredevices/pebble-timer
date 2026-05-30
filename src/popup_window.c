@@ -137,39 +137,45 @@ static void layers_center_in_window(PopupWindow *popup_window) {
 #else
   int16_t horiz_off = ACTION_BAR_WIDTH;
 #endif
+  GRect window_frame = layer_get_frame(window_get_root_layer(popup_window->window));
+  GRect text_frame = layer_get_frame(text_layer_get_layer(popup_window->text));
+
+  // size of the graphic (PDC or bitmap)
 #ifndef PBL_PLATFORM_APLITE
-  // change layer size based on PDC size, to center PDC
-  GSize pdc_frame = gdraw_command_sequence_get_bounds_size(popup_window->draw_sequence);
-  GRect window_frame = layer_get_frame(window_get_root_layer(popup_window->window));
-  GRect layer_frame = GRect(0, 0, pdc_frame.w, pdc_frame.h);
-  if (popup_window->action_visible) {
-    layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - pdc_frame.w / 2;
-  } else {
-    layer_frame.origin.x = window_frame.size.w / 2 - pdc_frame.w / 2;
-  }
-  layer_frame.origin.y = window_frame.size.h / 2 - pdc_frame.h / 2;
-  layer_set_frame(popup_window->layer, layer_frame);
+  GSize gfx_size = gdraw_command_sequence_get_bounds_size(popup_window->draw_sequence);
 #else
-  // change layer size based on image size, to center image
-  GRect image_frame = gbitmap_get_bounds(popup_window->image);
-  GRect window_frame = layer_get_frame(window_get_root_layer(popup_window->window));
-  GRect layer_frame = image_frame;
-  if (popup_window->action_visible) {
-    layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - image_frame.size.w / 2;
-  } else {
-    layer_frame.origin.x = window_frame.size.w / 2 - image_frame.size.w / 2;
-  }
-  layer_frame.origin.y = window_frame.size.h / 2 - image_frame.size.h / 2 - 7;
-  layer_set_frame(popup_window->layer, layer_frame);
+  GSize gfx_size = gbitmap_get_bounds(popup_window->image).size;
 #endif
 
-  // center the text layer
-  GRect text_frame = layer_get_frame(text_layer_get_layer(popup_window->text));
-  text_frame.size.w = layer_get_bounds(window_get_root_layer(popup_window->window)).size.w -
+  // keep the graphic vertically centered (its animations are authored to fit
+  // around this position) and place the text directly below it, clamped so it
+  // stays on screen on both short and tall displays
+  const int16_t gap = 5;
+  int16_t gfx_y = (window_frame.size.h - gfx_size.h) / 2;
+#ifdef PBL_PLATFORM_APLITE
+  gfx_y -= 7;  // preserve original aplite vertical offset
+#endif
+  int16_t text_y = gfx_y + gfx_size.h + gap;
+  if (text_y + text_frame.size.h > window_frame.size.h) {
+    text_y = window_frame.size.h - text_frame.size.h;
+  }
+
+  GRect layer_frame = GRect(0, gfx_y, gfx_size.w, gfx_size.h);
+  if (popup_window->action_visible) {
+    layer_frame.origin.x = (window_frame.size.w - horiz_off) / 2 - gfx_size.w / 2;
+  } else {
+    layer_frame.origin.x = window_frame.size.w / 2 - gfx_size.w / 2;
+  }
+  layer_set_frame(popup_window->layer, layer_frame);
+
+  text_frame.origin.x = 0;
+  text_frame.origin.y = text_y;
+  text_frame.size.w = window_frame.size.w -
     ((popup_window->action_visible) ? horiz_off : 0);
   layer_set_frame(text_layer_get_layer(popup_window->text), text_frame);
-  text_frame.origin.x = text_frame.origin.y = 0;
-  layer_set_bounds(text_layer_get_layer(popup_window->text), text_frame);
+  GRect text_bounds = text_frame;
+  text_bounds.origin.x = text_bounds.origin.y = 0;
+  layer_set_bounds(text_layer_get_layer(popup_window->text), text_bounds);
 }
 
 
