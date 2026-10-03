@@ -327,13 +327,20 @@ static void prv_window_load(Window* window){
   layer_set_update_proc(popup_window->layer, layer_update_proc);
   layer_add_child(root, popup_window->layer);
   // text
-#ifndef PBL_PLATFORM_APLITE
-  const int text_layer_origin_y = 125;
-#else
+#if (PBL_DISPLAY_HEIGHT > 180) // emery, gabbro, and any other pebble with a larger display
+  const int text_layer_origin_y = 162;
+#elif PBL_PLATFORM_APLITE
   const int text_layer_origin_y = 110;
+#else
+  const int text_layer_origin_y = 125;
 #endif
+
   popup_window->text = text_layer_create(GRect(0, text_layer_origin_y, bounds.size.w, 36));
+#if (PBL_DISPLAY_HEIGHT > 180) // emery, gabbro, and any other pebble with a larger display
+  text_layer_set_font(popup_window->text, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+#else
   text_layer_set_font(popup_window->text, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+#endif
   text_layer_set_text_alignment(popup_window->text, GTextAlignmentCenter);
   text_layer_set_background_color(popup_window->text, GColorClear);
   text_layer_set_text(popup_window->text, popup_window->title);
