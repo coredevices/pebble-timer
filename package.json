@@ -77,6 +77,11 @@
         },
         {
           "type": "bitmap",
+          "name": "IMAGE_REPLAY",
+          "file": "images/action_bar_icon_replay.png"
+        },
+        {
+          "type": "bitmap",
           "name": "IMAGE_DELETE",
           "file": "images/action_bar_icon_delete.png"
         },
